@@ -63,7 +63,7 @@ The application runs entirely client-side using vanilla web technologies. It has
   - Fixed Threshold: Fast, high-contrast binary cutoff ideal for logos, line art, and typography.
   - Floyd-Steinberg Error Diffusion Dithering: Smooth grayscale simulation ideal for photographs and detailed graphics.
 - Transformation Controls: Invert (negative) and real-time threshold adjustment.
-- Asset Library: 24 embedded hardware and sensor icons (Temperature, Humidity, Wi-Fi, Bluetooth, Battery levels, CPU, Storage, Gauges, and Arrows).
+- Asset Library: 84 embedded hardware, sensor, and UI icons (CPU/Chip, SD Card, Wi-Fi, Bluetooth, Signal/RF, Cloud, Battery, Gauges, EEPROM, GPS, Weather Sensors, Media Controls, Joystick, and Status indicators).
 
 ---
 
