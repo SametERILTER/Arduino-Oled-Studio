@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OLED Studio for Arduino and ESP32</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body class="dark-theme">
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-text">
+        <span class="brand-title" data-i18n="brand_title">OLED Studio</span>
+        <span class="brand-sub" data-i18n="brand_sub">for Arduino and ESP32</span>
+      </div>
+    </div>
+
+    <div class="top-center-actions">
+      <div class="action-group">
+        <button id="btnUndo" class="icon-btn" data-i18n-title="undo" title="Geri Al (Ctrl+Z)" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M9 14L4 9l5-5" />
+            <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
+          </svg>
+        </button>
+        <button id="btnRedo" class="icon-btn" data-i18n-title="redo" title="İleri Al (Ctrl+Y)" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M15 14l5-5-5-5" />
+            <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5v0A5.5 5.5 0 0 0 9.5 20H13" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="separator-v"></div>
+      <div class="action-group screen-type-group">
+        <label for="screenTypeSelect" class="label-muted" data-i18n="label_screen">Ekran:</label>
+        <select id="screenTypeSelect" class="select-input">
+          <option value="ssd1306_128x64" selected>0.96" 128×64 (SSD1306)</option>
+          <option value="sh1106_128x64">1.3" 128×64 (SH1106)</option>
+          <option value="ssd1306_128x32">0.91" 128×32 (SSD1306)</option>
+          <option value="ssd1306_64x48">0.66" 64×48 (SSD1306)</option>
+        </select>
+      </div>
+
+      <div class="separator-v"></div>
+      <div class="action-group zoom-control">
+        <button id="btnZoomOut" class="icon-btn" data-i18n-title="zoom_out" title="Uzaklaştır">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+        <span id="zoomLevelText" class="zoom-text">500%</span>
+        <button id="btnZoomIn" class="icon-btn" data-i18n-title="zoom_in" title="Yakınlaştır">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="separator-v"></div>
+      <div class="action-group">
+        <button id="btnToggleGrid" class="toggle-btn active" data-i18n-title="toggle_grid" title="Piksel Izgarasını Aç/Kapat">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+          </svg>
+          <span data-i18n="grid">Izgara</span>
+        </button>
+        <button id="btnInvert" class="toggle-btn" data-i18n-title="toggle_invert" title="Ekranı Ters Çevir (Invert)">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" />
+          </svg>
+          <span data-i18n="invert">Invert</span>
+        </button>
+      </div>
+
+      <div class="separator-v"></div>
+      <div class="action-group color-select-group">
+        <label for="oledColorSelect" class="label-muted" data-i18n="label_pixel_color">Piksel:</label>
+        <select id="oledColorSelect" class="select-input">
+          <option value="white" data-i18n="color_white" selected>Beyaz (Standart)</option>
+          <option value="blue" data-i18n="color_blue">OLED Mavisi</option>
+          <option value="yellow" data-i18n="color_yellow">OLED Sarısı</option>
+          <option value="green" data-i18n="color_green">OLED Yeşili</option>
+        </select>
+      </div>
+
+      <div class="separator-v"></div>
+      <button id="btnClearAll" class="btn-ghost-danger" data-i18n-title="clear_all_title" title="Tüm Çizimi ve Nesneleri Temizle">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+        <span data-i18n="clear">Temizle</span>
+      </button>
+    </div>
+
+    <div class="top-right-actions">
+      <div class="lang-dropdown" id="langDropdown">
+        <button type="button" class="lang-dropdown-trigger" id="langTrigger" title="Dil / Language" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <span class="lang-current-code" id="langCurrentCode">TR</span>
+          <svg class="lang-chevron" viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2.5" fill="none">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <div class="lang-dropdown-menu" id="langMenu" role="menu">
+          <button type="button" class="lang-option active" data-lang="tr" role="menuitem">
+            <span class="lang-opt-name">Türkçe</span>
+            <span class="lang-opt-code">TR</span>
+          </button>
+          <button type="button" class="lang-option" data-lang="en" role="menuitem">
+            <span class="lang-opt-name">English</span>
+            <span class="lang-opt-code">EN</span>
+          </button>
+        </div>
+      </div>
+      <div class="separator-v"></div>
+      <label class="btn-subtle" data-i18n-title="open_json_title" title="JSON Proje Dosyası Aç">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span data-i18n="open">Aç</span>
+        <input type="file" id="inputFileJson" accept=".json" style="display:none;">
+      </label>
+      <button id="btnExportIno" class="btn-primary" data-i18n-title="download_ino_title" title="Arduino .ino Kodu Olarak İndir">
+        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span data-i18n="download_ino">.ino İndir</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="app-layout">
+    <aside class="left-sidebar">
+      <div class="sidebar-section-title" data-i18n="section_tools">ARAÇLAR</div>
+      <div class="tools-grid">
+        <button class="tool-btn active" data-tool="select" data-i18n-title="tool_select_title" title="Seç & Taşı (V)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M3 3l7 18 3-7 7-3L3 3z" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_select">Seç</span>
+        </button>
+        <button class="tool-btn" data-tool="pencil" data-i18n-title="tool_pencil_title" title="Piksel Kalemi (P)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M12 19l7-7 3 3-7 7-3-3z" />
+            <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+            <path d="M2 2l7.586 7.586" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_pencil">Kalem</span>
+        </button>
+        <button class="tool-btn" data-tool="eraser" data-i18n-title="tool_eraser_title" title="Piksel Silgisi (E)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M20 20H7L3 16a1 1 0 0 1 0-1.4l10-10a1 1 0 0 1 1.4 0l6.6 6.6a1 1 0 0 1 0 1.4L15 18" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_eraser">Silgi</span>
+        </button>
+        <button class="tool-btn" data-tool="text" data-i18n-title="tool_text_title" title="Yazı Ekle (T)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <polyline points="4 7 4 4 20 4 20 7" />
+            <line x1="9" y1="20" x2="15" y2="20" />
+            <line x1="12" y1="4" x2="12" y2="20" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_text">Yazı</span>
+        </button>
+        <button class="tool-btn" data-tool="line" data-i18n-title="tool_line_title" title="Çizgi (L)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="4" y1="20" x2="20" y2="4" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_line">Çizgi</span>
+        </button>
+        <button class="tool-btn" data-tool="rect" data-i18n-title="tool_rect_title" title="Dikdörtgen (R)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="18" height="18" rx="1" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_rect">Kutu</span>
+        </button>
+        <button class="tool-btn" data-tool="filled_rect" data-i18n-title="tool_filled_rect_title" title="Dolu Dikdörtgen">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="currentColor">
+            <rect x="3" y="3" width="18" height="18" rx="1" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_filled_rect">Dolu Kutu</span>
+        </button>
+        <button class="tool-btn" data-tool="circle" data-i18n-title="tool_circle_title" title="Çember (C)">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_circle">Çember</span>
+        </button>
+        <button class="tool-btn" data-tool="filled_circle" data-i18n-title="tool_filled_circle_title" title="Dolu Çember">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="currentColor">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+          <span class="tool-label" data-i18n="tool_filled_circle">Dolu Çember</span>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-header">
+        <span class="sidebar-section-title" data-i18n="section_preset_icons">HAZIR İKONLAR</span>
+        <span class="badge-count">24</span>
+      </div>
+      <div class="preset-icons-grid" id="presetIconsGrid">
+        <button class="preset-icon-btn" data-preset="battery_full" data-i18n-title="icon_battery_full" title="Batarya (Dolu)">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="2" y="7" width="16" height="10" rx="2" />
+            <line x1="22" y1="11" x2="22" y2="13" />
+            <rect x="5" y="9.5" width="10" height="5" fill="currentColor" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="battery_half" data-i18n-title="icon_battery_half" title="Batarya (Yarım)">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="2" y="7" width="16" height="10" rx="2" />
+            <line x1="22" y1="11" x2="22" y2="13" />
+            <rect x="5" y="9.5" width="5" height="5" fill="currentColor" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="battery_empty" data-i18n-title="icon_battery_empty" title="Batarya (Boş)">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="2" y="7" width="16" height="10" rx="2" />
+            <line x1="22" y1="11" x2="22" y2="13" />
+          </svg>
+        </button>
+
+        <button class="preset-icon-btn" data-preset="wifi" data-i18n-title="icon_wifi" title="WiFi">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <line x1="12" y1="20" x2="12.01" y2="20" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="bluetooth" data-i18n-title="icon_bluetooth" title="Bluetooth">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="heart" data-i18n-title="icon_heart" title="Kalp / Nabız">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="currentColor">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </button>
+
+        <button class="preset-icon-btn" data-preset="thermometer" data-i18n-title="icon_thermometer" title="Sıcaklık">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="drop" data-i18n-title="icon_drop" title="Nem / Su Damlası">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="clock" data-i18n-title="icon_clock" title="Saat">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="bolt" data-i18n-title="icon_bolt" title="Güç / Şimşek">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+        </button>
+
+        <button class="preset-icon-btn" data-preset="sun" data-i18n-title="icon_sun" title="Güneş / Aydınlık">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="4" />
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="moon" data-i18n-title="icon_moon" title="Ay / Gece">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+
+        <button class="preset-icon-btn" data-preset="lock" data-i18n-title="icon_lock" title="Kilitli">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="unlock" data-i18n-title="icon_unlock" title="Açık Kilit">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="gear" data-i18n-title="icon_gear" title="Ayarlar / Dişli">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="home" data-i18n-title="icon_home" title="Ev / Home">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        </button>
+
+        <button class="preset-icon-btn" data-preset="speaker" data-i18n-title="icon_speaker" title="Hoparlör / Ses">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="mute" data-i18n-title="icon_mute" title="Sessiz">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="alert" data-i18n-title="icon_alert" title="Uyarı / Dikkat">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="trash" data-i18n-title="icon_trash" title="Çöp Kutusu">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+        </button>
+
+        <button class="preset-icon-btn" data-preset="arrow_up" data-i18n-title="icon_arrow_up" title="Yukarı Ok">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="12" y1="19" x2="12" y2="5" />
+            <polyline points="5 12 12 5 19 12" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="arrow_down" data-i18n-title="icon_arrow_down" title="Aşağı Ok">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <polyline points="19 12 12 19 5 12" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="arrow_left" data-i18n-title="icon_arrow_left" title="Sol Ok">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="19" y1="12" x2="5" y2="12" />
+            <polyline points="12 19 5 12 12 5" />
+          </svg>
+        </button>
+        <button class="preset-icon-btn" data-preset="arrow_right" data-i18n-title="icon_arrow_right" title="Sağ Ok">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section-title" data-i18n="section_import_image">RESİM İÇE AKTAR</div>
+      <label class="import-image-btn" data-i18n-title="upload_image_title" title="1-bit Siyah-Beyaz Resim Yükle">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
+        </svg>
+        <span data-i18n="upload_image">Resim Yükle (.png, .bmp)</span>
+        <input type="file" id="inputImageBitmap" accept="image/*" style="display:none;">
+      </label>
+
+      <div class="sidebar-footer-tip">
+        <span data-i18n="shortcuts_label">Kısayollar:</span>
+        <small data-i18n="shortcuts_tip">V: Seç | P: Kalem | E: Silgi | T: Yazı | Del: Sil</small>
+      </div>
+    </aside>
+
+    <section class="canvas-viewport" id="viewport">
+      <div class="screens-header-bar" id="screensHeaderBar">
+        <button id="btnOverviewMode" class="btn-tab-overview" data-i18n-title="overview_mode_title" title="Tüm Ekranlar Genel Bakış (Figma Modu)">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          </svg>
+          <span class="overview-btn-text" data-i18n="all_screens">Tüm Ekranlar</span>
+        </button>
+        <div class="tabs-header-divider"></div>
+
+        <div class="screen-tabs-wrapper">
+          <div class="screen-tabs-list" id="screenTabsList">
+          </div>
+
+          <button id="btnAddScreen" class="btn-add-screen" data-i18n-title="add_screen_title" title="Yeni Ekran Ekle (+)">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.2" fill="none">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="figma-overview-container" id="figmaOverviewContainer" style="display: none;">
+        <div class="overview-toolbar">
+          <div class="overview-title-tag">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+            </svg>
+            <span data-i18n="all_screens_cap">TÜM EKRANLAR</span>
+            <span class="overview-count-badge" id="overviewScreenCount">1 Screen</span>
+          </div>
+
+          <div class="overview-zoom-actions">
+            <button id="btnOverviewZoomOut" class="overview-action-btn" data-i18n-title="overview_zoom_out_title" title="Uzaklaştır (Mouse Tekerleği Aşağı)">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <span class="overview-zoom-label" id="overviewZoomLabel">85%</span>
+            <button id="btnOverviewZoomIn" class="overview-action-btn" data-i18n-title="overview_zoom_in_title" title="Yakınlaştır (Mouse Tekerleği Yukarı)">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <button id="btnOverviewFit" class="overview-action-btn" data-i18n-title="overview_fit_title" title="Tümünü Ekrana Sığdır">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path
+                  d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
+            </button>
+            <div class="overview-divider"></div>
+            <button id="btnCloseOverview" class="overview-close-btn" data-i18n-title="close_overview_title" title="Editöre Dön (ESC)">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              <span data-i18n="return_to_editor">Editöre Dön</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="figma-canvas-viewport" id="figmaCanvasViewport">
+          <div class="figma-canvas-transform" id="figmaCanvasTransform">
+            <div class="figma-artboards-grid" id="figmaArtboardsGrid">
+            </div>
+          </div>
+        </div>
+
+        <div class="overview-footer-hint">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="16" x2="12" y2="12" />
+            <line x1="12" y1="8" x2="12.01" y2="8" />
+          </svg>
+          <span data-i18n="overview_hint">Mouse tekerleğiyle yakınlaştırıp uzaklaştırabilir, boş alandan sürükleyerek kaydırabilirsiniz.
+            Düzenlemek istediğiniz ekrana tıklayın. İsimlere tıklayarak yeniden adlandırabilirsiniz.</span>
+        </div>
+      </div>
+
+      <div class="oled-module-wrapper">
+        <div class="oled-pcb-board">
+          <div class="pcb-mount-hole hole-tl"></div>
+          <div class="pcb-mount-hole hole-tr"></div>
+          <div class="pcb-mount-hole hole-bl"></div>
+          <div class="pcb-mount-hole hole-br"></div>
+
+          <div class="pcb-header-section">
+            <div class="pcb-pin-pads">
+              <span class="pin-solder-pad" title="GND"></span>
+              <span class="pin-solder-pad" title="VCC"></span>
+              <span class="pin-solder-pad" title="SCL"></span>
+              <span class="pin-solder-pad" title="SDA"></span>
+            </div>
+            <div class="pcb-pin-silkscreen">
+              <span>GND</span>
+              <span>VCC</span>
+              <span>SCL</span>
+              <span>SDA</span>
+            </div>
+          </div>
+
+          <div class="oled-glass-panel">
+            <div class="oled-display-surface">
+              <canvas id="oledCanvas" width="128" height="64"></canvas>
+              <canvas id="overlayCanvas" width="128" height="64"></canvas>
+            </div>
+
+            <div class="oled-glass-bottom">
+              <div class="oled-glass-shelf">
+                <span class="shelf-trace"></span>
+              </div>
+              <div class="oled-black-tape"></div>
+              <div class="oled-fpc-ribbon"></div>
+            </div>
+          </div>
+
+          <div class="pcb-footer-info">
+            <span class="pcb-model-text">0.96" OLED I2C</span>
+            <span class="active-coord" id="mouseCoordText">X: --, Y: --</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="viewport-status-bar">
+        <div class="status-item" id="selectionStatus">
+          <span data-i18n="status_no_selection">Seçili: Hiçbir nesne seçilmedi</span>
+        </div>
+        <div class="status-item" id="canvasScaleText">
+          <span>Ölçek: 5x</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right-sidebar">
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-header">
+          <span class="panel-heading" data-i18n="heading_properties">ÖZELLİKLER</span>
+          <button id="btnDeleteSelected" class="icon-btn-danger" data-i18n-title="delete_selected_title" title="Seçili Nesneyi Sil (Delete)" disabled>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="noSelectionMsg" class="no-selection-hint">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="1.5" fill="none">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <p data-i18n="no_selection_hint">Düzenlemek veya taşımak için OLED ekranındaki bir nesneye tıklayın ya da sol bardan bir araç seçin.</p>
+        </div>
+
+        <div id="brushPropertiesForm" class="properties-form" style="display: none;">
+          <div class="form-field" id="eraserModeField" style="display: none;">
+            <label data-i18n="label_eraser_mode">Silgi Modu</label>
+            <div class="brush-size-buttons">
+              <button type="button" class="btn-eraser-mode active" data-mode="pixel" style="grid-column: span 2;" data-i18n="btn_erase_pixel">Piksel Sil</button>
+              <button type="button" class="btn-eraser-mode" data-mode="object" style="grid-column: span 2;" data-i18n="btn_erase_object">Nesne Sil</button>
+            </div>
+          </div>
+          <div class="form-field" id="brushSizeField">
+            <label id="brushTitleLabel" data-i18n="label_brush_size">Boyut Seçimi</label>
+            <div class="brush-size-buttons">
+              <button type="button" class="btn-brush-size active" data-size="1" data-i18n-title="brush_1px" title="1 Piksel">
+                <span class="brush-dot-wrap"><span class="brush-dot dot-1"></span></span>
+                <span class="brush-label">1 px</span>
+              </button>
+              <button type="button" class="btn-brush-size" data-size="2" data-i18n-title="brush_2px" title="2 Piksel">
+                <span class="brush-dot-wrap"><span class="brush-dot dot-2"></span></span>
+                <span class="brush-label">2 px</span>
+              </button>
+              <button type="button" class="btn-brush-size" data-size="3" data-i18n-title="brush_3px" title="3 Piksel">
+                <span class="brush-dot-wrap"><span class="brush-dot dot-3"></span></span>
+                <span class="brush-label">3 px</span>
+              </button>
+              <button type="button" class="btn-brush-size" data-size="4" data-i18n-title="brush_4px" title="4 Piksel">
+                <span class="brush-dot-wrap"><span class="brush-dot dot-4"></span></span>
+                <span class="brush-label">4 px</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="propertiesForm" class="properties-form" style="display: none;">
+          <div class="form-row-2col">
+            <div class="form-field">
+              <label for="propX" data-i18n="label_x">X (Piksel)</label>
+              <input type="number" id="propX" min="0" max="127" class="num-input">
+            </div>
+            <div class="form-field">
+              <label for="propY" data-i18n="label_y">Y (Piksel)</label>
+              <input type="number" id="propY" min="0" max="63" class="num-input">
+            </div>
+          </div>
+
+          <div class="form-row-2col" id="dimensionProps">
+            <div class="form-field" id="fieldW">
+              <label for="propW" data-i18n="label_w">Genişlik (W)</label>
+              <input type="number" id="propW" min="1" max="128" class="num-input">
+            </div>
+            <div class="form-field" id="fieldH">
+              <label for="propH" data-i18n="label_h">Yükseklik (H)</label>
+              <input type="number" id="propH" min="1" max="64" class="num-input">
+            </div>
+          </div>
+
+          <div id="textSpecificProps" style="display: none;">
+            <div class="form-field">
+              <label for="propText" data-i18n="label_text_content">Metin İçeriği</label>
+              <input type="text" id="propText" class="text-input" data-i18n-placeholder="ph_text_content" placeholder="Yazılacak metin...">
+            </div>
+            <div class="form-field">
+              <label for="propTextSize" data-i18n="label_font_size">Font Boyutu (Adafruit GFX Ölçeği)</label>
+              <select id="propTextSize" class="select-input">
+                <option value="1" data-i18n="font_size_1">Boyut 1 (6×8 px - Standart)</option>
+                <option value="2" data-i18n="font_size_2">Boyut 2 (12×16 px)</option>
+                <option value="3" data-i18n="font_size_3">Boyut 3 (18×24 px)</option>
+                <option value="4" data-i18n="font_size_4">Boyut 4 (24×32 px)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="shapeSpecificProps" style="display: none;">
+            <div class="form-field checkbox-field">
+              <label>
+                <input type="checkbox" id="propFilled">
+                <span data-i18n="shape_filled">İçi Dolu (Filled)</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="bitmapSpecificProps" class="bitmap-specific-props" style="display: none;">
+            <div class="props-section-divider">
+              <span data-i18n="bitmap_settings_title">RESİM / BITMAP AYARLARI</span>
+            </div>
+
+            <div class="form-field">
+              <div class="field-header-row">
+                <label for="propBitmapThreshold" data-i18n="label_threshold">Siyah/Beyaz Eşiği (Threshold)</label>
+                <span class="threshold-badge" id="propBitmapThresholdVal">128</span>
+              </div>
+              <div class="slider-wrapper">
+                <input type="range" id="propBitmapThreshold" min="0" max="255" value="128" class="range-slider">
+                <div class="slider-scale">
+                  <span data-i18n="threshold_dark">0 (Koyu)</span>
+                  <span>128</span>
+                  <span data-i18n="threshold_light">255 (Açık)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="propBitmapMode" data-i18n="label_conversion_mode">Dönüştürme Yöntemi</label>
+              <select id="propBitmapMode" class="select-input">
+                <option value="threshold" data-i18n="mode_threshold">Sabit Eşik (İkon & Logo İçin Net)</option>
+                <option value="dither" data-i18n="mode_dither">Floyd-Steinberg Dither (Fotoğraf İçin Gölgeli)</option>
+              </select>
+            </div>
+
+            <div class="form-field checkbox-field">
+              <label>
+                <input type="checkbox" id="propBitmapInvert">
+                <span data-i18n="invert_colors_negative">Renkleri Ters Çevir (Negatif)</span>
+              </label>
+            </div>
+
+            <div class="bitmap-action-row">
+              <button type="button" id="btnBitmapOrigSize" class="btn-subtle-sm" data-i18n-title="btn_orig_size_title" title="Resmi orijinal piksel boyutuna getir" data-i18n="btn_orig_size">
+                Orijinal Boyut
+              </button>
+              <button type="button" id="btnBitmapFit" class="btn-subtle-sm" data-i18n-title="btn_fit_screen_title" title="Resmi ekran sınırlarına orantılı sığdır" data-i18n="btn_fit_screen">
+                Ekrana Sığdır
+              </button>
+            </div>
+          </div>
+
+          <div class="quick-align-group">
+            <span class="label-muted" data-i18n="label_align">Hizala:</span>
+            <div class="align-buttons">
+              <button id="btnAlignLeft" class="btn-tiny" data-i18n-title="align_left_title" title="Sola Daya" data-i18n="align_left">Sol</button>
+              <button id="btnAlignCenterH" class="btn-tiny" data-i18n-title="align_center_h_title" title="Yatay Ortala" data-i18n="align_center_h">Yatay Orta</button>
+              <button id="btnAlignRight" class="btn-tiny" data-i18n-title="align_right_title" title="Sağa Daya" data-i18n="align_right">Sağ</button>
+              <button id="btnAlignCenterV" class="btn-tiny" data-i18n-title="align_center_v_title" title="Dikey Ortala" data-i18n="align_center_v">Dikey Orta</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-panel layers-panel">
+        <div class="sidebar-panel-header">
+          <span class="panel-heading" data-i18n="heading_layers">KATMANLAR</span>
+          <span class="layers-count" id="layersCount">0 nesne</span>
+        </div>
+        <div class="layers-list-container" id="layersList">
+        </div>
+      </div>
+
+      <div class="sidebar-panel code-export-panel">
+        <div class="sidebar-panel-header">
+          <span class="panel-heading" data-i18n="heading_code">KOD</span>
+          <div class="code-header-actions">
+            <button id="btnExpandCode" class="icon-btn-sm" data-i18n-title="expand_code_title" title="Kodu Tam Ekran Yap">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="code-options-bar">
+          <div class="code-opt-row">
+            <span class="code-opt-label" data-i18n="label_code_format">Format:</span>
+            <select id="codeFormatSelect" class="code-opt-select">
+              <option value="adafruit_commands">Adafruit SSD1306</option>
+              <option value="bitmap_array">Bitmap (PROGMEM)</option>
+              <option value="u8g2" data-i18n="opt_u8g2">U8g2 Kütüphanesi</option>
+            </select>
+          </div>
+          <div class="code-opt-row">
+            <span class="code-opt-label" data-i18n="label_code_scope">Kapsam:</span>
+            <select id="codeScopeSelect" class="code-opt-select">
+              <option value="full_project" data-i18n="scope_full_project">Tüm Proje (.ino)</option>
+              <option value="active_screen_only" data-i18n="scope_active_screen_only">Sadece Bu Ekran</option>
+              <option value="modular_header" data-i18n="scope_modular_header">screens.h (Modüler)</option>
+              <option value="bitmaps_only" data-i18n="scope_bitmaps_only">Yalnızca Bitmapler</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="code-snippet-wrapper">
+          <pre><code id="arduinoCodeSnippet">// Generating code...</code></pre>
+          <button id="btnCopyCode" class="copy-code-btn" data-i18n-title="copy_code_title" title="Kodu Panoya Kopyala">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            <span id="copyBtnText" data-i18n="copy">Kopyala</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="codeModalOverlay" class="code-modal-overlay" style="display: none;">
+    <div class="code-modal-box">
+      <div class="code-modal-header">
+        <div class="modal-header-left">
+          <div class="modal-badge-group">
+            <span class="brand-badge">C++</span>
+            <span class="modal-title" data-i18n="modal_code_title">Arduino OLED Kodu</span>
+          </div>
+          <div class="modal-memory-stats" id="modalMemoryStats">
+            <span class="stat-pill" id="statFlash">Flash: 0 Bayt</span>
+            <span class="stat-pill" id="statObjects">Nesneler: 0</span>
+          </div>
+        </div>
+        <div class="modal-header-right">
+          <div class="modal-opt-group">
+            <span class="modal-opt-label" data-i18n="label_code_format">Format:</span>
+            <select id="modalCodeFormatSelect" class="select-input select-input-sm">
+              <option value="adafruit_commands">Adafruit SSD1306</option>
+              <option value="bitmap_array">Bitmap (PROGMEM)</option>
+              <option value="u8g2" data-i18n="opt_u8g2">U8g2 Kütüphanesi</option>
+            </select>
+          </div>
+
+          <div class="modal-opt-group">
+            <span class="modal-opt-label" data-i18n="label_code_scope">Kapsam:</span>
+            <select id="modalCodeScopeSelect" class="select-input select-input-sm">
+              <option value="full_project" data-i18n="scope_full_project">Tüm Proje (.ino)</option>
+              <option value="active_screen_only" data-i18n="scope_active_screen_only">Sadece Aktif Ekran</option>
+              <option value="modular_header" data-i18n="scope_modular_header">screens.h (Modüler Başlık)</option>
+              <option value="bitmaps_only" data-i18n="scope_bitmaps_only">Yalnızca Bitmapler</option>
+            </select>
+          </div>
+
+          <button id="modalBtnCopyCode" class="btn-primary" data-i18n-title="copy_code_title" title="Kodu Panoya Kopyala">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+            <span id="modalCopyBtnText" data-i18n="copy">Kopyala</span>
+          </button>
+          <button id="btnCloseCodeModal" class="icon-btn" data-i18n-title="close_esc_title" title="Kapat (ESC)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="code-modal-body">
+        <pre><code id="modalArduinoCodeSnippet">// Preparing code...</code></pre>
+      </div>
+      <div class="code-modal-footer">
+        <span id="modalFooterTip" data-i18n-html="modal_footer_tip">İpucu: Kodu kapatmak için <strong>ESC</strong> tuşuna basabilir veya dışarıya tıklayabilirsiniz.</span>
+        <button id="modalBtnDownloadIno" class="btn-subtle" data-i18n-title="download_as_file" title="Dosya Olarak İndir">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span id="modalDownloadBtnLabel" data-i18n="download_ino">.ino İndir</span>
+        </button>
+      </div>
+      <div id="tabContextMenu" class="tab-context-menu" style="display: none;">
+        <div class="context-menu-item" id="menuRenameTab">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          <span data-i18n="ctx_rename">Rename</span>
+          <span class="context-shortcut" data-i18n="ctx_double_click">Double Click</span>
+        </div>
+        <div class="context-menu-item" id="menuClearTab">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          </svg>
+          <span data-i18n="ctx_clear">Clear Screen</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="menuCloseTab">
+          <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+          <span data-i18n="ctx_close">Close Screen</span>
+        </div>
+      </div>
+
+      <script src="i18n.js"></script>
+      <script src="js/constants.js"></script>
+      <script src="js/state.js"></script>
+      <script src="js/renderer.js"></script>
+      <script src="js/screens.js"></script>
+      <script src="js/editor.js"></script>
+      <script src="js/icons.js"></script>
+      <script src="js/codegen.js"></script>
+      <script src="js/app.js"></script>
+</body>
+
+</html>
