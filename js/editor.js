@@ -521,6 +521,7 @@ function updatePropertiesPanel() {
   if (!selObj) {
     if (noSelectionMsg) noSelectionMsg.style.display = 'flex';
     if (propertiesForm) propertiesForm.style.display = 'none';
+    if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
     if (btnDeleteSelected) btnDeleteSelected.disabled = true;
     selectionStatus.textContent = typeof t === 'function' ? t('status_no_selection') : 'Seçili: Hiçbir nesne seçilmedi';
     return;
@@ -545,6 +546,7 @@ function updatePropertiesFormValues(obj) {
     dimensionProps.style.display = 'grid';
     textSpecificProps.style.display = 'none';
     shapeSpecificProps.style.display = 'none';
+    if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
   } else if (obj.type === 'text') {
     propX.value = obj.x;
     propY.value = obj.y;
@@ -553,6 +555,7 @@ function updatePropertiesFormValues(obj) {
     propText.value = obj.text;
     propTextSize.value = obj.size;
     shapeSpecificProps.style.display = 'none';
+    if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
   } else if (obj.type === 'circle' || obj.type === 'filled_circle') {
     propX.value = obj.x;
     propY.value = obj.y;
@@ -563,8 +566,26 @@ function updatePropertiesFormValues(obj) {
     textSpecificProps.style.display = 'none';
     shapeSpecificProps.style.display = 'block';
     propFilled.checked = obj.type === 'filled_circle';
+    if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
+  } else if (obj.type === 'bitmap') {
+    propX.value = obj.x;
+    propY.value = obj.y;
+    dimensionProps.style.display = 'grid';
+    document.getElementById('fieldW').querySelector('label').textContent = typeof t === 'function' ? t('label_w') : 'Genişlik (W)';
+    document.getElementById('fieldH').style.display = 'flex';
+    propW.value = obj.w;
+    propH.value = obj.h;
+    textSpecificProps.style.display = 'none';
+    shapeSpecificProps.style.display = 'none';
+    if (bitmapSpecificProps) {
+      bitmapSpecificProps.style.display = 'flex';
+      const thresh = obj.threshold !== undefined ? obj.threshold : 128;
+      if (propBitmapThreshold) propBitmapThreshold.value = thresh;
+      if (propBitmapThresholdVal) propBitmapThresholdVal.textContent = thresh;
+      if (propBitmapMode) propBitmapMode.value = obj.ditherMode || 'threshold';
+      if (propBitmapInvert) propBitmapInvert.checked = !!obj.inverted;
+    }
   } else {
-
     propX.value = obj.x;
     propY.value = obj.y;
     dimensionProps.style.display = 'grid';
@@ -580,6 +601,7 @@ function updatePropertiesFormValues(obj) {
     } else {
       shapeSpecificProps.style.display = 'none';
     }
+    if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
   }
 }
 
