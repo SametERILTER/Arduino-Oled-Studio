@@ -136,8 +136,8 @@ No compilation, installation, or local server configuration is necessary.
 
 1. Clone or download the repository:
    ```bash
-   git clone https://github.com/your-username/oled-studio.git
-   cd oled-studio
+   git clone https://github.com/SametERILTER/Arduino-Oled-Studio.git
+   cd Arduino-Oled-Studio
    ```
 2. Double-click `index.html` to open it in Google Chrome, Mozilla Firefox, Microsoft Edge, or Safari.
 
@@ -211,9 +211,12 @@ If you encounter a bug, incorrect code generation output, or display compatibili
 
 ## Contact
 
-- Repository: [https://github.com/your-username/oled-studio](https://github.com/your-username/oled-studio)
-- Issue Tracker: [https://github.com/your-username/oled-studio/issues](https://github.com/your-username/oled-studio/issues)
-- Maintainer: Samet (samet@example.com / GitHub [@your-username])
+This project is currently under active development. If you encounter any issues, have feature requests, or want to contribute feedback regarding display support and code generation:
+
+- Maintainer: Samet
+- Email: sametbilal34@gmail.com
+- GitHub Issues: https://github.com/SametERILTER/Arduino-Oled-Studio/issues
+- Project Repository: https://github.com/SametERILTER/Arduino-Oled-Studio
 
 ---
 
