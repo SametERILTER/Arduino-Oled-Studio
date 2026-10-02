@@ -62,7 +62,7 @@ The application runs entirely client-side using vanilla web technologies. It has
 - Quantization Modes:
   - Fixed Threshold: Fast, high-contrast binary cutoff ideal for logos, line art, and typography.
   - Floyd-Steinberg Error Diffusion Dithering: Smooth grayscale simulation ideal for photographs and detailed graphics.
-- Transformation Controls: Invert (negative), original size reset, and proportional fit-to-screen scaling.
+- Transformation Controls: Invert (negative) and real-time threshold adjustment.
 - Asset Library: 24 embedded hardware and sensor icons (Temperature, Humidity, Wi-Fi, Bluetooth, Battery levels, CPU, Storage, Gauges, and Arrows).
 
 ---

@@ -816,41 +816,6 @@ if (propBitmapInvert) {
   });
 }
 
-if (btnBitmapOrigSize) {
-  btnBitmapOrigSize.addEventListener('click', () => {
-    const selObj = getSelectedObject();
-    if (!selObj || selObj.type !== 'bitmap') return;
-    pushHistory();
-    selObj.w = selObj.origW || selObj.w;
-    selObj.h = selObj.origH || selObj.h;
-    propW.value = selObj.w;
-    propH.value = selObj.h;
-    renderAll();
-    updateArduinoCode();
-  });
-}
-
-if (btnBitmapFit) {
-  btnBitmapFit.addEventListener('click', () => {
-    const selObj = getSelectedObject();
-    if (!selObj || selObj.type !== 'bitmap') return;
-    pushHistory();
-    const origW = selObj.origW || selObj.w;
-    const origH = selObj.origH || selObj.h;
-    const ratio = Math.min(SCREEN_WIDTH / origW, SCREEN_HEIGHT / origH);
-    selObj.w = Math.max(1, Math.round(origW * ratio));
-    selObj.h = Math.max(1, Math.round(origH * ratio));
-    selObj.x = Math.round((SCREEN_WIDTH - selObj.w) / 2);
-    selObj.y = Math.round((SCREEN_HEIGHT - selObj.h) / 2);
-    propX.value = selObj.x;
-    propY.value = selObj.y;
-    propW.value = selObj.w;
-    propH.value = selObj.h;
-    renderAll();
-    updateArduinoCode();
-  });
-}
-
 btnDeleteSelected.addEventListener('click', deleteSelectedObject);
 
 function deleteSelectedObject() {
