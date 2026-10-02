@@ -213,10 +213,7 @@ If you encounter a bug, incorrect code generation output, or display compatibili
 
 This project is currently under active development. If you encounter any issues, have feature requests, or want to contribute feedback regarding display support and code generation:
 
-- Maintainer: Samet
 - Email: sametbilal34@gmail.com
-- GitHub Issues: https://github.com/SametERILTER/Arduino-Oled-Studio/issues
-- Project Repository: https://github.com/SametERILTER/Arduino-Oled-Studio
 
 ---
 
