@@ -1,5 +1,10 @@
 # OLED Studio
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Try_Online-00d26a?style=for-the-badge&logo=googlechrome&logoColor=white)](https://sameterilter.github.io/Arduino-Oled-Studio/)
+[![No Install Required](https://img.shields.io/badge/Web_App-No_Install-blue?style=for-the-badge)](https://sameterilter.github.io/Arduino-Oled-Studio/)
+
+>**Live Demo:** [sameterilter.github.io/Arduino-Oled-Studio](https://sameterilter.github.io/Arduino-Oled-Studio/)
+
 ![OLED Studio Preview](assets/screenshot.png)
 
 A lightweight, browser-based graphical user interface designer, pixel editor, and C++ code generator for monochrome OLED displays connected to Arduino, ESP32, ESP8266, and compatible microcontrollers.
@@ -41,6 +46,8 @@ The application runs entirely client-side using vanilla web technologies. It has
 ## Core Capabilities
 
 ### Multi-Screen Workflow and Artboard Overview
+
+![Multi-Screen Artboard Overview](assets/all_pages.gif)
 
 - Tab-based screen management: Create, duplicate, reorder, clear, and delete independent display screens.
 - Global Artboard Overview: Zoom out into an interactive multi-display canvas to inspect all project screens side by side, rename them inline, or jump directly into any screen for editing.

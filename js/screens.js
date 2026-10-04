@@ -227,6 +227,9 @@ function switchScreen(screenId) {
   state.undoStack = screen.undoStack || [];
   state.redoStack = screen.redoStack || [];
 
+  state.isDrawing = false;
+  state.dragMode = null;
+  state.creationPreview = null;
   selectObject(null);
   updateTabBarActiveState();
   renderAll();
