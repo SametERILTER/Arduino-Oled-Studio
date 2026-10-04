@@ -44,7 +44,6 @@ The application runs entirely client-side using vanilla web technologies. It has
 
 - Tab-based screen management: Create, duplicate, reorder, clear, and delete independent display screens.
 - Global Artboard Overview: Zoom out into an interactive multi-display canvas to inspect all project screens side by side, rename them inline, or jump directly into any screen for editing.
-- Automatic name synchronization: Default screen names update dynamically when toggling between languages (e.g., `Screen 1` to `Ekran 1`), while user-defined custom titles are preserved.
 
 ### Drawing and Editing Tools
 
