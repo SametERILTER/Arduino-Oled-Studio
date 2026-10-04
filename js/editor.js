@@ -320,7 +320,19 @@ overlayCanvas.addEventListener('mouseleave', () => {
   renderOverlay();
 });
 
-function getReadableObjectName(type) {
+function isIconObject(obj) {
+  if (!obj) return false;
+  if (obj.type !== 'bitmap') return false;
+  if (obj.isIcon === true || obj.subtype === 'icon' || obj.presetKey !== undefined) return true;
+  if (typeof PRESET_ICONS !== 'undefined' && PRESET_ICONS && PRESET_ICONS[obj.name]) return true;
+  if (typeof document !== 'undefined' && document.querySelector && document.querySelector(`.preset-icon-btn[data-preset="${obj.name}"]`)) return true;
+  return false;
+}
+
+function getReadableObjectName(type, obj) {
+  if (type === 'bitmap' && obj && isIconObject(obj)) {
+    return typeof t === 'function' ? (t('obj_icon') || 'İkon') : 'İkon';
+  }
   if (typeof t === 'function') {
     switch (type) {
       case 'rect': return t('obj_rect');
@@ -329,7 +341,7 @@ function getReadableObjectName(type) {
       case 'filled_circle': return t('obj_filled_circle');
       case 'line': return t('obj_line');
       case 'text': return t('obj_text');
-      case 'bitmap': return t('obj_bitmap');
+      case 'bitmap': return t('obj_bitmap') || 'Resim';
       default: return t('obj_default');
     }
   }
@@ -340,7 +352,7 @@ function getReadableObjectName(type) {
     case 'filled_circle': return 'Dolu Çember';
     case 'line': return 'Çizgi';
     case 'text': return 'Metin';
-    case 'bitmap': return 'Resim / İkon';
+    case 'bitmap': return 'Resim';
     default: return 'Nesne';
   }
 }
@@ -531,8 +543,8 @@ function updatePropertiesPanel() {
   if (propertiesForm) propertiesForm.style.display = 'flex';
   if (btnDeleteSelected) btnDeleteSelected.disabled = false;
   selectionStatus.textContent = typeof t === 'function' 
-    ? t('status_selected', { name: selObj.name, type: getReadableObjectName(selObj.type) })
-    : `Seçili: ${selObj.name} (${selObj.type})`;
+    ? t('status_selected', { name: selObj.name, type: getReadableObjectName(selObj.type, selObj) })
+    : `Seçili: ${selObj.name} (${getReadableObjectName(selObj.type, selObj)})`;
 
   updatePropertiesFormValues(selObj);
 }
@@ -578,12 +590,16 @@ function updatePropertiesFormValues(obj) {
     textSpecificProps.style.display = 'none';
     shapeSpecificProps.style.display = 'none';
     if (bitmapSpecificProps) {
-      bitmapSpecificProps.style.display = 'flex';
-      const thresh = obj.threshold !== undefined ? obj.threshold : 128;
-      if (propBitmapThreshold) propBitmapThreshold.value = thresh;
-      if (propBitmapThresholdVal) propBitmapThresholdVal.textContent = thresh;
-      if (propBitmapMode) propBitmapMode.value = obj.ditherMode || 'threshold';
-      if (propBitmapInvert) propBitmapInvert.checked = !!obj.inverted;
+      if (isIconObject(obj)) {
+        bitmapSpecificProps.style.display = 'none';
+      } else {
+        bitmapSpecificProps.style.display = 'flex';
+        const thresh = obj.threshold !== undefined ? obj.threshold : 128;
+        if (propBitmapThreshold) propBitmapThreshold.value = thresh;
+        if (propBitmapThresholdVal) propBitmapThresholdVal.textContent = thresh;
+        if (propBitmapMode) propBitmapMode.value = obj.ditherMode || 'threshold';
+        if (propBitmapInvert) propBitmapInvert.checked = !!obj.inverted;
+      }
     }
   } else {
     propX.value = obj.x;

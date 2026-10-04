@@ -112,6 +112,15 @@ window.addEventListener('keydown', (e) => {
       closeCodeModal();
       return;
     }
+    const animModalOverlay = document.getElementById('animModalOverlay');
+    if (animModalOverlay && animModalOverlay.style.display !== 'none') {
+      if (typeof window.closeAnimStudio === 'function') {
+        window.closeAnimStudio();
+      } else {
+        animModalOverlay.style.display = 'none';
+      }
+      return;
+    }
   }
 
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {

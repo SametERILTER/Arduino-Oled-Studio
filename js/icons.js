@@ -112,6 +112,9 @@ document.querySelectorAll('.preset-icon-btn').forEach(btn => {
     const newBitmap = {
       id: generateId(),
       type: 'bitmap',
+      isIcon: true,
+      subtype: 'icon',
+      presetKey: key,
       name: presetName,
       x: Math.round((SCREEN_WIDTH - preset.w) / 2),
       y: Math.round((SCREEN_HEIGHT - preset.h) / 2),
@@ -162,6 +165,8 @@ inputImageBitmap.addEventListener('change', (e) => {
       const newBitmap = {
         id: generateId(),
         type: 'bitmap',
+        isIcon: false,
+        subtype: 'image',
         name: file.name.substring(0, 12),
         x: Math.round((SCREEN_WIDTH - targetW) / 2),
         y: Math.round((SCREEN_HEIGHT - targetH) / 2),

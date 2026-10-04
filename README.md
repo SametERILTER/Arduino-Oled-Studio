@@ -1,6 +1,6 @@
 # OLED Studio
 
-![OLED Studio Preview](screenshot.png)
+![OLED Studio Preview](assets/screenshot.png)
 
 A lightweight, browser-based graphical user interface designer, pixel editor, and C++ code generator for monochrome OLED displays connected to Arduino, ESP32, ESP8266, and compatible microcontrollers.
 
@@ -64,6 +64,20 @@ The application runs entirely client-side using vanilla web technologies. It has
   - Floyd-Steinberg Error Diffusion Dithering: Smooth grayscale simulation ideal for photographs and detailed graphics.
 - Transformation Controls: Invert (negative) and real-time threshold adjustment.
 - Asset Library: 84 embedded hardware, sensor, and UI icons (CPU/Chip, SD Card, Wi-Fi, Bluetooth, Signal/RF, Cloud, Battery, Gauges, EEPROM, GPS, Weather Sensors, Media Controls, Joystick, and Status indicators).
+ 
+### Procedural Animation & Motion Studio (Beta)
+
+![Animation Studio Demo](assets/animation_page.gif)
+
+Creating smooth animations on microcontrollers (such as Arduino Uno, Nano, or ESP32) is traditionally difficult. Storing frame-by-frame bitmap sequences quickly exhausts scarce microcontroller flash memory (PROGMEM), while writing manual coordinate math and timing loops by hand requires tedious trial and error.
+
+The Animation Studio radically simplifies this workflow by introducing a visual, keyframe-based procedural motion system:
+
+- **Effortless Keyframe Workflow**: Simply define the initial position (Start Frame) and target position (End Frame). The engine automatically calculates the interpolation, timing, and coordinate transitions in between.
+- **Interactive Visual Canvas**: Freely drag, reposition, and inspect animated elements directly on the virtual OLED display rather than guessing coordinates in code.
+- **Zero Flash Bloat (Pure Procedural Generation)**: Generates lightweight mathematical C++ drawing routines (~0 KB PROGMEM, ~16 bytes RAM) instead of bulky bitmap arrays, preserving microcontroller storage for your main application logic.
+- **Geometric Vectors & Quick Motions**: Animate rounded boxes, circles, dynamic lines, and text with one-click presets for common movement patterns (slide, bounce, pulse, blink).
+- **Instant Production-Ready Code**: Generates self-contained `.ino` sketches or modular `.h` headers for both **Adafruit SSD1306** and **U8g2** libraries with zero boilerplate setup.
 
 ---
 
