@@ -1017,10 +1017,12 @@ body.dark-theme {
 .pcb-footer-info {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
-  padding-top: 6px;
+  padding: 8px 24px 2px 24px;
+  box-sizing: border-box;
   font-family: var(--font-ui);
-  font-size: 10px;
+  font-size: 10.5px;
   color: #93c5fd;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
@@ -1033,6 +1035,9 @@ body.dark-theme {
 
 .active-coord {
   color: #e0f2fe;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 .viewport-status-bar {
