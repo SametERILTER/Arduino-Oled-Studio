@@ -883,7 +883,7 @@ modalBtnDownloadIno.addEventListener('click', () => {
 });
 
 function copyCodeToClipboard(text, labelElem, btnElem) {
-  navigator.clipboard.writeText(text).then(() => {
+  const onSuccess = () => {
     const originalText = labelElem.textContent;
     labelElem.textContent = typeof t === 'function' ? t('copied') : 'Kopyalandı!';
     btnElem.style.backgroundColor = '#10b981';
@@ -893,5 +893,28 @@ function copyCodeToClipboard(text, labelElem, btnElem) {
       btnElem.style.backgroundColor = '';
       btnElem.style.borderColor = '';
     }, 1500);
-  });
+  };
+
+  const fallbackCopy = (str) => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = str;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      onSuccess();
+    } catch (e) {
+      console.error('Clipboard copy failed:', e);
+    }
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onSuccess).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
 }

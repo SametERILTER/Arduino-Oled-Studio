@@ -240,7 +240,12 @@ function switchScreen(screenId) {
 
 function addNewScreen(name) {
   syncActiveScreen();
-  const screenNum = state.screens.length + 1;
+  let maxNum = 0;
+  state.screens.forEach(s => {
+    const m = s.name.match(/\d+$/);
+    if (m) maxNum = Math.max(maxNum, parseInt(m[0], 10));
+  });
+  const screenNum = Math.max(state.screens.length + 1, maxNum + 1);
   const defName = typeof t === 'function' ? `${t('default_screen_name')} ${screenNum}` : `Screen ${screenNum}`;
   const newScreen = {
     id: 'screen_' + generateId(),
@@ -254,15 +259,17 @@ function addNewScreen(name) {
   state.screens.push(newScreen);
   lastAddedScreenId = newScreen.id;
   switchScreen(newScreen.id);
-  if (overviewActive) renderFigmaOverview();
 }
 
+const deletingScreenIds = new Set();
+
 function deleteScreen(screenId, tabElement) {
+  if (deletingScreenIds.has(screenId)) return;
   const screen = state.screens.find(s => s.id === screenId);
   if (!screen) return;
 
   const isLastScreen = state.screens.length <= 1;
-  const hasContent = screen.objects.length > 0 || screen.pixels.some(p => p === 1);
+  const hasContent = screen.objects.length > 0 || screen.pixels.some(p => p === 1) || screen.erasedPixels.some(p => p === 1);
 
   if (isLastScreen) {
     if (hasContent) {
@@ -282,7 +289,10 @@ function deleteScreen(screenId, tabElement) {
     }
   }
 
+  deletingScreenIds.add(screenId);
+
   const executeDelete = () => {
+    deletingScreenIds.delete(screenId);
     if (isLastScreen) {
       screen.objects = [];
       screen.pixels = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -291,23 +301,25 @@ function deleteScreen(screenId, tabElement) {
       screen.redoStack = [];
       screen.name = typeof t === 'function' ? `${t('default_screen_name')} 1` : 'Screen 1';
       lastAddedScreenId = screen.id;
+      renderScreensTabBar();
       switchScreen(screen.id);
     } else {
       const idx = state.screens.findIndex(s => s.id === screenId);
-      state.screens.splice(idx, 1);
-
-      if (state.activeScreenId === screenId) {
-        const nextIdx = Math.max(0, idx - 1);
-        switchScreen(state.screens[nextIdx].id);
-      } else {
-        renderScreensTabBar();
-        updateArduinoCode();
+      if (idx !== -1) {
+        state.screens.splice(idx, 1);
+        if (state.activeScreenId === screenId) {
+          const nextIdx = Math.max(0, idx - 1);
+          switchScreen(state.screens[nextIdx].id);
+        } else {
+          renderScreensTabBar();
+          updateArduinoCode();
+        }
       }
     }
     if (overviewActive) renderFigmaOverview();
   };
 
-  if (tabElement) {
+  if (tabElement && !isLastScreen) {
     tabElement.classList.add('tab-closing');
     setTimeout(executeDelete, 190);
   } else {
@@ -324,6 +336,7 @@ let overviewScale = 0.85;
 let overviewPanX = 0;
 let overviewPanY = 0;
 let isOverviewPanning = false;
+let hasPanned = false;
 let startPanX = 0;
 let startPanY = 0;
 
@@ -363,19 +376,27 @@ function renderScreenPreviewToCanvas(screen, canvas) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  const theme = COLOR_MAP[state.colorTheme] || COLOR_MAP.white;
+  const theme = COLOR_MAP[state.oledColor] || COLOR_MAP.white;
   const isInv = !!state.inverted;
 
   ctx.fillStyle = isInv ? theme.pixel : '#000000';
   ctx.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  const objBuf = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
+  const total = SCREEN_WIDTH * SCREEN_HEIGHT;
+  if (!screen.pixels || screen.pixels.length !== total) {
+    screen.pixels = new Uint8Array(total);
+  }
+  if (!screen.erasedPixels || screen.erasedPixels.length !== total) {
+    screen.erasedPixels = new Uint8Array(total);
+  }
+
+  const objBuf = new Uint8Array(total);
   for (const obj of screen.objects) {
     if (obj.visible === false) continue;
     drawObjectToBuffer(obj, objBuf);
   }
 
-  for (let i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+  for (let i = 0; i < total; i++) {
     if (screen.erasedPixels[i] === 1) {
       objBuf[i] = 0;
     }
@@ -393,7 +414,7 @@ function renderScreenPreviewToCanvas(screen, canvas) {
   const bgG = isInv ? g : 0;
   const bgB = isInv ? b : 0;
 
-  for (let i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; i++) {
+  for (let i = 0; i < total; i++) {
     const isLit = (screen.pixels[i] === 1 || objBuf[i] === 1);
     const pIdx = i * 4;
     if (isLit) {
@@ -445,6 +466,12 @@ function renderFigmaOverview() {
 
     const startArtboardRename = (e) => {
       e.stopPropagation();
+      if (header.querySelector('.artboard-rename-input')) {
+        const existing = header.querySelector('.artboard-rename-input');
+        existing.focus();
+        return;
+      }
+      if (!titleSpan.parentNode) return;
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'artboard-rename-input';
@@ -502,6 +529,7 @@ function renderFigmaOverview() {
     frame.className = 'mini-oled-frame';
 
     const editBtnText = typeof t === 'function' ? t('edit_screen') : 'Ekranı Düzenle';
+    const canvasH = Math.round(256 * (SCREEN_HEIGHT / SCREEN_WIDTH));
     frame.innerHTML = `
       <div class="mini-pcb-holes">
         <div class="mini-hole tl"></div>
@@ -513,7 +541,7 @@ function renderFigmaOverview() {
         <span>GND</span><span>VCC</span><span>SCL</span><span>SDA</span>
       </div>
       <div class="mini-oled-screen-bezel">
-        <canvas class="mini-oled-canvas" width="${SCREEN_WIDTH}" height="${SCREEN_HEIGHT}"></canvas>
+        <canvas class="mini-oled-canvas" width="${SCREEN_WIDTH}" height="${SCREEN_HEIGHT}" style="width: 256px; height: ${canvasH}px;"></canvas>
         <div class="artboard-hover-overlay">
           <button class="btn-open-artboard">
             <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -527,6 +555,7 @@ function renderFigmaOverview() {
     renderScreenPreviewToCanvas(screen, canvas);
 
     card.addEventListener('click', (e) => {
+      if (hasPanned) return;
       if (e.target.closest('.artboard-rename-btn') || e.target.closest('.artboard-rename-input')) return;
       switchScreen(screen.id);
       closeOverviewMode();
@@ -548,7 +577,6 @@ function renderFigmaOverview() {
   `;
   addCard.addEventListener('click', () => {
     addNewScreen();
-    renderFigmaOverview();
   });
   figmaArtboardsGrid.appendChild(addCard);
 }
@@ -566,6 +594,7 @@ if (figmaCanvasViewport) {
     if (e.target.closest('.artboard-rename-input')) return;
     if (e.target === figmaCanvasViewport || e.target === figmaCanvasTransform || e.target === figmaArtboardsGrid || e.button === 1) {
       isOverviewPanning = true;
+      hasPanned = false;
       startPanX = e.clientX - overviewPanX;
       startPanY = e.clientY - overviewPanY;
       figmaCanvasViewport.style.cursor = 'grabbing';
@@ -574,6 +603,11 @@ if (figmaCanvasViewport) {
 
   window.addEventListener('mousemove', (e) => {
     if (!isOverviewPanning) return;
+    const dx = e.clientX - (startPanX + overviewPanX);
+    const dy = e.clientY - (startPanY + overviewPanY);
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      hasPanned = true;
+    }
     overviewPanX = e.clientX - startPanX;
     overviewPanY = e.clientY - startPanY;
     updateOverviewTransform();
@@ -583,6 +617,7 @@ if (figmaCanvasViewport) {
     if (isOverviewPanning) {
       isOverviewPanning = false;
       if (figmaCanvasViewport) figmaCanvasViewport.style.cursor = 'grab';
+      setTimeout(() => { hasPanned = false; }, 50);
     }
   });
 }

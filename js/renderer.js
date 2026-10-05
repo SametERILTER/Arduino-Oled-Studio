@@ -49,6 +49,8 @@ function renderAll() {
   renderOled();
   renderOverlay();
   renderLayersList();
+  if (typeof syncActiveScreen === 'function') syncActiveScreen();
+  if (typeof updateTabBarActiveState === 'function') updateTabBarActiveState();
 }
 
 function renderOled() {

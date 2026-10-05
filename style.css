@@ -1956,11 +1956,11 @@ body.dark-theme {
   gap: 8px;
   cursor: pointer;
   position: relative;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), filter 0.18s ease;
+  transition: filter 0.18s ease;
 }
 
 .figma-artboard-card:hover {
-  transform: translateY(-5px);
+  /* No upward shift on hover as requested */
 }
 
 .artboard-header {
@@ -2114,7 +2114,8 @@ body.dark-theme {
 
 .mini-oled-canvas {
   width: 256px;
-  height: 128px;
+  height: auto;
+  max-height: 128px;
   image-rendering: pixelated;
   display: block;
 }

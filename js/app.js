@@ -100,6 +100,10 @@ function downloadBlob(blob, filename) {
 
 window.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      e.target.blur();
+      return;
+    }
     if (tabContextMenu && tabContextMenu.style.display !== 'none') {
       tabContextMenu.style.display = 'none';
       return;
@@ -121,6 +125,7 @@ window.addEventListener('keydown', (e) => {
       }
       return;
     }
+    return;
   }
 
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {

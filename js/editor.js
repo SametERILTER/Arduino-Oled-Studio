@@ -687,9 +687,14 @@ propText.addEventListener('input', () => {
   updateArduinoCode();
 });
 
+propText.addEventListener('change', () => {
+  pushHistory();
+});
+
 propTextSize.addEventListener('change', () => {
   const selObj = getSelectedObject();
   if (!selObj || selObj.type !== 'text') return;
+  pushHistory();
   selObj.size = parseInt(propTextSize.value) || 1;
   renderAll();
   updateArduinoCode();
@@ -698,6 +703,7 @@ propTextSize.addEventListener('change', () => {
 propFilled.addEventListener('change', () => {
   const selObj = getSelectedObject();
   if (!selObj) return;
+  pushHistory();
   if (selObj.type === 'rect' || selObj.type === 'filled_rect') {
     selObj.type = propFilled.checked ? 'filled_rect' : 'rect';
   } else if (selObj.type === 'circle' || selObj.type === 'filled_circle') {
