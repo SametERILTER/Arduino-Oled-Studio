@@ -37,7 +37,7 @@ The application runs entirely client-side using vanilla web technologies. It has
 - Language: ECMAScript 2020 (Vanilla JavaScript)
 - Styling: Pure CSS3 custom properties (dark engineering palette)
 - Rendering Engine: Dual HTML5 Canvas system (base display buffer + interactive overlay canvas)
-- Font Engine: Built-in 5x7 Adafruit GFX bitmap font matrix
+- Font Engine: Built-in 5x7 Adafruit GFX bitmap font matrix + new experimental fonts (Experimental)
 - Persistence: LocalStorage for settings and state; JSON export/import for complete project definitions
 - Dependencies: None
 
@@ -58,7 +58,7 @@ The application runs entirely client-side using vanilla web technologies. It has
 - Freehand Pixel Pencil: Draw individual pixels with configurable pen sizes (1px, 2px, 3px, 4px).
 - Dual Eraser Modes: Pixel-level precision eraser or one-click object eraser.
 - Geometric Primitives: Lines, open rectangles, filled rectangles, open circles, and filled circles.
-- Dynamic Text: Real-time text rendering with standard Adafruit GFX bitmap scaling (1x, 2x, 3x, 4x).
+- Dynamic Text: Real-time text rendering with standard Adafruit GFX bitmap scaling (1x, 2x, 3x, 4x) and new experimental font support (Experimental).
 - Alignment Suite: Instant alignment to screen borders and center axes (Left, Center H, Right, Top, Center V, Bottom).
 - Layers Panel: Full hierarchy management with visibility toggling, layer reordering (move up/down), and object deletion.
 
@@ -198,6 +198,7 @@ Features and capabilities currently under development or scheduled for upcoming 
 - [x] Real-time Floyd-Steinberg dithering and image importer
 - [x] Adafruit GFX and U8g2 C++ code generation
 - [x] Offline project save and load via structured JSON
+- [x] Experimental font support
 - [ ] Web Serial API integration for live USB screen streaming directly to hardware
 - [ ] Multi-frame animation editor with framerate control and animated GIF/Sprite sheet export
 - [ ] Custom BDF and TrueType (TTF) font converter to PROGMEM character tables
