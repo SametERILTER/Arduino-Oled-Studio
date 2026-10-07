@@ -129,3 +129,60 @@ const FONT_5X7 = {
   125: [0x00, 0x41, 0x36, 0x08, 0x00], 
   126: [0x08, 0x08, 0x2A, 0x1C, 0x08]  
 };
+
+const FONTS_CATALOG = {
+  default: {
+    id: 'default',
+    name: 'Adafruit 5×7',
+    u8g2Font: 'u8g2_font_6x10_tr',
+    cssFamily: "'JetBrains Mono', Consolas, monospace",
+    charW: 6,
+    charH: 8,
+    baseline: 7
+  },
+  profont12: {
+    id: 'profont12',
+    name: 'ProFont 12',
+    u8g2Font: 'u8g2_font_profont12_mf',
+    cssFamily: "'JetBrains Mono', Consolas, monospace",
+    charW: 6,
+    charH: 12,
+    baseline: 9
+  },
+  helvB10: {
+    id: 'helvB10',
+    name: 'Helvetica Bold',
+    u8g2Font: 'u8g2_font_helvB10_tr',
+    cssFamily: "'Plus Jakarta Sans', Arial, sans-serif",
+    charW: 8,
+    charH: 14,
+    baseline: 11
+  },
+  logisoso24: {
+    id: 'logisoso24',
+    name: 'Logisoso 24',
+    u8g2Font: 'u8g2_font_logisoso24_tr',
+    cssFamily: "'Plus Jakarta Sans', 'Trebuchet MS', sans-serif",
+    charW: 16,
+    charH: 26,
+    baseline: 22
+  },
+  retro8: {
+    id: 'retro8',
+    name: 'Retro Arcade',
+    u8g2Font: 'u8g2_font_pressstart2p_8u',
+    cssFamily: "'Press Start 2P', monospace",
+    charW: 8,
+    charH: 10,
+    baseline: 8
+  },
+  seven_seg: {
+    id: 'seven_seg',
+    name: '7-Segment LED',
+    u8g2Font: 'u8g2_font_inb24_mn',
+    cssFamily: "'JetBrains Mono', Consolas, monospace",
+    charW: 14,
+    charH: 24,
+    baseline: 20
+  }
+};

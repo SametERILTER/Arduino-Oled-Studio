@@ -22,12 +22,22 @@ function extractScreenAdafruitCommands(screen, sIdx) {
   for (const obj of screen.objects) {
     if (obj.visible === false) continue;
     switch (obj.type) {
-      case 'text':
-        commands.push(`  display.setTextSize(${obj.size});`);
-        commands.push(`  display.setTextColor(SSD1306_WHITE);`);
-        commands.push(`  display.setCursor(${obj.x}, ${obj.y});`);
-        commands.push(`  display.print("${escapeForCpp(obj.text)}");`);
+      case 'text': {
+        const fontDef = (typeof FONTS_CATALOG !== 'undefined' && FONTS_CATALOG[obj.font]) ? FONTS_CATALOG[obj.font] : null;
+        if (!fontDef || fontDef.id === 'default') {
+          commands.push(`  display.setTextSize(${obj.size});`);
+          commands.push(`  display.setTextColor(SSD1306_WHITE);`);
+          commands.push(`  display.setCursor(${obj.x}, ${obj.y});`);
+          commands.push(`  display.print("${escapeForCpp(obj.text)}");`);
+        } else {
+          const baselineY = obj.y + Math.round(fontDef.baseline * obj.size);
+          commands.push(`  u8g2_for_adafruit.setFont(${fontDef.u8g2Font});`);
+          commands.push(`  u8g2_for_adafruit.setForegroundColor(WHITE);`);
+          commands.push(`  u8g2_for_adafruit.setCursor(${obj.x}, ${baselineY});`);
+          commands.push(`  u8g2_for_adafruit.print("${escapeForCpp(obj.text)}");`);
+        }
         break;
+      }
       case 'rect':
         commands.push(`  display.drawRect(${obj.x}, ${obj.y}, ${obj.w}, ${obj.h}, SSD1306_WHITE);`);
         break;
@@ -76,10 +86,13 @@ function extractScreenU8g2Commands(screen) {
   for (const obj of screen.objects) {
     if (obj.visible === false) continue;
     switch (obj.type) {
-      case 'text':
-        commands.push(`  u8g2.setFont(u8g2_font_6x10_tr);`);
-        commands.push(`  u8g2.drawStr(${obj.x}, ${obj.y + 7 * obj.size}, "${escapeForCpp(obj.text)}");`);
+      case 'text': {
+        const fontDef = (typeof FONTS_CATALOG !== 'undefined' && FONTS_CATALOG[obj.font]) ? FONTS_CATALOG[obj.font] : ((typeof FONTS_CATALOG !== 'undefined') ? FONTS_CATALOG.default : { u8g2Font: 'u8g2_font_6x10_tr', baseline: 7 });
+        const baselineY = obj.y + Math.round(fontDef.baseline * obj.size);
+        commands.push(`  u8g2.setFont(${fontDef.u8g2Font});`);
+        commands.push(`  u8g2.drawStr(${obj.x}, ${baselineY}, "${escapeForCpp(obj.text)}");`);
         break;
+      }
       case 'rect':
         commands.push(`  u8g2.drawFrame(${obj.x}, ${obj.y}, ${obj.w}, ${obj.h});`);
         break;
@@ -347,6 +360,11 @@ ${switchCases.join('\n')}
   display.display();
 }`;
 
+  const hasCustomFonts = state.screens.some(s => s.objects.some(o => o.visible !== false && o.type === 'text' && o.font && o.font !== 'default'));
+  const headerIncludes = isU8g2 
+    ? '#include <U8g2lib.h>\nextern U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2;' 
+    : `#include <Adafruit_GFX.h>\n#include <Adafruit_SSD1306.h>\nextern Adafruit_SSD1306 display;${hasCustomFonts ? '\n#include <U8g2_for_Adafruit_GFX.h>\nextern U8g2_for_Adafruit_GFX u8g2_for_adafruit;' : ''}`;
+
   return `/*
  * ============================================================================
  * screens.h - Modular OLED Screen Definitions
@@ -361,7 +379,7 @@ ${switchCases.join('\n')}
 #include <Arduino.h>
 #include <avr/pgmspace.h>
 
-${isU8g2 ? '#include <U8g2lib.h>\nextern U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2;' : '#include <Adafruit_GFX.h>\n#include <Adafruit_SSD1306.h>\nextern Adafruit_SSD1306 display;'}
+${headerIncludes}
 
 #define SCREEN_WIDTH ${SCREEN_WIDTH}
 #define SCREEN_HEIGHT ${SCREEN_HEIGHT}
@@ -438,6 +456,11 @@ ${switchCases.join('\n')}
 `;
   }
 
+  const hasCustomFonts = state.screens.some(s => s.objects.some(o => o.visible !== false && o.type === 'text' && o.font && o.font !== 'default'));
+  const fontInclude = hasCustomFonts ? '#include <U8g2_for_Adafruit_GFX.h>\n' : '';
+  const fontInstance = hasCustomFonts ? '\nU8g2_for_Adafruit_GFX u8g2_for_adafruit;\n' : '';
+  const fontSetup = hasCustomFonts ? '  u8g2_for_adafruit.begin(display); // Connect U8g2 fonts to Adafruit display\n' : '';
+
   const setupCode = isMulti ? `void setup() {
   Serial.begin(115200);
 
@@ -446,7 +469,7 @@ ${switchCases.join('\n')}
     for(;;);
   }
 
-  display.clearDisplay();
+${fontSetup}  display.clearDisplay();
 ${invertCode}  // Load initial screen (0 = Screen 1)
   showScreen(0);
 }` : `void setup() {
@@ -457,7 +480,7 @@ ${invertCode}  // Load initial screen (0 = Screen 1)
     for(;;);
   }
 
-  display.clearDisplay();
+${fontSetup}  display.clearDisplay();
 ${invertCode}  drawScreen1();
   display.display();
 }`;
@@ -471,14 +494,13 @@ ${invertCode}  drawScreen1();
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
+${fontInclude}
 #define SCREEN_WIDTH ${SCREEN_WIDTH}
 #define SCREEN_HEIGHT ${SCREEN_HEIGHT}
 #define OLED_RESET    -1
 #define SCREEN_ADDRESS 0x3C
 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);${fontInstance}
 ${progmemBlock}// ==========================================================================
 // SCREEN DRAWING FUNCTIONS (MODULAR)
 // ==========================================================================
@@ -826,6 +848,7 @@ btnCopyCode.addEventListener('click', () => {
 });
 
 const btnExpandCode = document.getElementById('btnExpandCode');
+const btnViewCode = document.getElementById('btnViewCode');
 const codeModalOverlay = document.getElementById('codeModalOverlay');
 const btnCloseCodeModal = document.getElementById('btnCloseCodeModal');
 const modalBtnCopyCode = document.getElementById('modalBtnCopyCode');
@@ -846,8 +869,9 @@ function closeCodeModal() {
   document.body.style.overflow = '';
 }
 
-btnExpandCode.addEventListener('click', openCodeModal);
-btnCloseCodeModal.addEventListener('click', closeCodeModal);
+if (btnViewCode) btnViewCode.addEventListener('click', openCodeModal);
+if (btnExpandCode) btnExpandCode.addEventListener('click', openCodeModal);
+if (btnCloseCodeModal) btnCloseCodeModal.addEventListener('click', closeCodeModal);
 
 codeModalOverlay.addEventListener('click', (e) => {
   if (e.target === codeModalOverlay) {

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap"
     rel="stylesheet">
 </head>
 
@@ -215,7 +215,14 @@
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-header">
         <span class="sidebar-section-title" data-i18n="section_preset_icons">HAZIR İKONLAR</span>
-        <span class="badge-count">84</span>
+        <div class="sidebar-section-right-group">
+          <span class="badge-count">84</span>
+          <button id="btnOpenIconsModal" class="icon-expand-btn" data-i18n-title="btn_expand_icons_title" title="Tüm İkonları Gör ve Ara">
+            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="preset-icons-grid" id="presetIconsGrid">
         <button class="preset-icon-btn" data-preset="battery_full" data-i18n-title="icon_battery_full" title="Batarya (Dolu)">
@@ -1010,12 +1017,23 @@
               <input type="text" id="propText" class="text-input" data-i18n-placeholder="ph_text_content" placeholder="Yazılacak metin...">
             </div>
             <div class="form-field">
-              <label for="propTextSize" data-i18n="label_font_size">Font Boyutu (Adafruit GFX Ölçeği)</label>
+              <label for="propTextFont" data-i18n="label_font_family">Yazı Tipi (Font)</label>
+              <select id="propTextFont" class="select-input">
+                <option value="default" data-i18n="font_default">Adafruit 5×7 (Standart Piksel)</option>
+                <option value="profont12" data-i18n="font_profont12">ProFont 12 (Kompakt Mini Kod)</option>
+                <option value="helvB10" data-i18n="font_helvB10">Helvetica Bold (Modern Başlık)</option>
+                <option value="logisoso24" data-i18n="font_logisoso24">Logisoso 24 (Büyük Dijital Rakam)</option>
+                <option value="retro8" data-i18n="font_retro8">Retro Arcade (8-Bit Piksel)</option>
+                <option value="seven_seg" data-i18n="font_seven_seg">7-Segment (LED Saat / Sayaç)</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="propTextSize" data-i18n="label_font_size">Font Boyutu (Ölçek)</label>
               <select id="propTextSize" class="select-input">
-                <option value="1" data-i18n="font_size_1">Boyut 1 (6×8 px - Standart)</option>
-                <option value="2" data-i18n="font_size_2">Boyut 2 (12×16 px)</option>
-                <option value="3" data-i18n="font_size_3">Boyut 3 (18×24 px)</option>
-                <option value="4" data-i18n="font_size_4">Boyut 4 (24×32 px)</option>
+                <option value="1" data-i18n="font_size_1">1x (Orijinal Boyut)</option>
+                <option value="2" data-i18n="font_size_2">2x (2 Katı)</option>
+                <option value="3" data-i18n="font_size_3">3x (3 Katı)</option>
+                <option value="4" data-i18n="font_size_4">4x (4 Katı)</option>
               </select>
             </div>
           </div>
@@ -1089,44 +1107,35 @@
       <div class="sidebar-panel code-export-panel">
         <div class="sidebar-panel-header">
           <span class="panel-heading" data-i18n="heading_code">KOD</span>
-          <div class="code-header-actions">
-            <button id="btnExpandCode" class="icon-btn-sm" data-i18n-title="expand_code_title" title="Kodu Tam Ekran Yap">
-              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-              </svg>
-            </button>
-          </div>
         </div>
 
-        <div class="code-options-bar">
-          <div class="code-opt-row">
-            <span class="code-opt-label" data-i18n="label_code_format">Format:</span>
-            <select id="codeFormatSelect" class="code-opt-select">
-              <option value="adafruit_commands">Adafruit SSD1306</option>
-              <option value="bitmap_array">Bitmap (PROGMEM)</option>
-              <option value="u8g2" data-i18n="opt_u8g2">U8g2 Kütüphanesi</option>
-            </select>
-          </div>
-          <div class="code-opt-row">
-            <span class="code-opt-label" data-i18n="label_code_scope">Kapsam:</span>
-            <select id="codeScopeSelect" class="code-opt-select">
-              <option value="full_project" data-i18n="scope_full_project">Tüm Proje (.ino)</option>
-              <option value="active_screen_only" data-i18n="scope_active_screen_only">Sadece Bu Ekran</option>
-              <option value="modular_header" data-i18n="scope_modular_header">screens.h (Modüler)</option>
-              <option value="bitmaps_only" data-i18n="scope_bitmaps_only">Yalnızca Bitmapler</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="code-snippet-wrapper">
-          <pre><code id="arduinoCodeSnippet">// Generating code...</code></pre>
-          <button id="btnCopyCode" class="copy-code-btn" data-i18n-title="copy_code_title" title="Kodu Panoya Kopyala">
-            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        <div class="code-view-action-card">
+          <button id="btnViewCode" class="btn-primary btn-view-code" data-i18n-title="view_code_title" title="Arduino / ESP32 Kodunu Görüntüle">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
             </svg>
-            <span id="copyBtnText" data-i18n="copy">Kopyala</span>
+            <span data-i18n="btn_view_code">Kodu Görüntüle</span>
           </button>
+        </div>
+
+        <!-- Gizli kontroller (kod üretimi ve uyumluluk için korunuyor) -->
+        <div style="display: none;" aria-hidden="true">
+          <select id="codeFormatSelect">
+            <option value="adafruit_commands" selected>Adafruit SSD1306</option>
+            <option value="bitmap_array">Bitmap (PROGMEM)</option>
+            <option value="u8g2">U8g2 Kütüphanesi</option>
+          </select>
+          <select id="codeScopeSelect">
+            <option value="full_project" selected>Tüm Proje (.ino)</option>
+            <option value="active_screen_only">Sadece Bu Ekran</option>
+            <option value="modular_header">screens.h (Modüler)</option>
+            <option value="bitmaps_only">Yalnızca Bitmapler</option>
+          </select>
+          <button id="btnExpandCode"></button>
+          <button id="btnCopyCode"></button>
+          <span id="copyBtnText"></span>
+          <pre><code id="arduinoCodeSnippet"></code></pre>
         </div>
       </div>
     </aside>
@@ -1193,6 +1202,54 @@
           </svg>
           <span id="modalDownloadBtnLabel" data-i18n="download_ino">.ino İndir</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="iconsModalOverlay" class="code-modal-overlay icons-modal-overlay" style="display: none;">
+    <div class="code-modal-box icons-modal-box">
+      <div class="code-modal-header">
+        <div class="modal-header-left">
+          <div class="modal-badge-group">
+            <span class="modal-title" data-i18n="modal_icons_title">Hazır İkon Kütüphanesi</span>
+          </div>
+          <span class="stat-pill" id="iconsModalCountBadge">84 İkon</span>
+        </div>
+        
+        <div class="icons-modal-search-bar">
+          <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="iconsSearchInput" class="icons-search-input" data-i18n-placeholder="ph_search_icons" placeholder="İkon ara (örn: wifi, pil, saat, kalp)...">
+          <button id="btnClearIconSearch" class="btn-clear-search" style="display: none;" title="Temizle">✕</button>
+        </div>
+
+        <div class="modal-header-right">
+          <button id="btnCloseIconsModal" class="icon-btn" data-i18n-title="close_esc_title" title="Kapat (ESC)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="icons-modal-body">
+        <div class="icons-modal-grid" id="iconsModalGrid">
+          <!-- Populated dynamically with all icons -->
+        </div>
+        <div id="iconsModalNoResults" class="icons-no-results" style="display: none;">
+          <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="1.5" fill="none">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <p data-i18n="no_icons_found">Aramanızla eşleşen ikon bulunamadı.</p>
+        </div>
+      </div>
+
+      <div class="code-modal-footer">
+        <span data-i18n-html="icons_modal_footer_tip">İpucu: Eklemek istediğiniz ikona tıklayın. Pencereyi kapatmak için <strong>ESC</strong> tuşuna basabilirsiniz.</span>
       </div>
     </div>
   </div>

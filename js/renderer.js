@@ -4,14 +4,41 @@ function generateId() {
   return `obj_${Date.now()}_${nextObjId++}`;
 }
 
+let fontMeasureCanvas = null;
+let fontMeasureCtx = null;
+
+function getTextDimensions(text, size, fontId) {
+  size = Math.max(1, Math.round(size || 1));
+  const fontDef = (typeof FONTS_CATALOG !== 'undefined' && FONTS_CATALOG[fontId]) ? FONTS_CATALOG[fontId] : null;
+
+  if (!fontDef || fontDef.id === 'default') {
+    const len = (text && text.length) || 1;
+    return {
+      w: len * 6 * size,
+      h: 8 * size
+    };
+  }
+
+  const fontSizePx = Math.round((fontDef.charH || 10) * size);
+  if (!fontMeasureCanvas) {
+    fontMeasureCanvas = document.createElement('canvas');
+    fontMeasureCtx = fontMeasureCanvas.getContext('2d', { willReadFrequently: true });
+  }
+
+  const isBold = fontDef.id === 'helvB10';
+  fontMeasureCtx.font = `${isBold ? 'bold ' : ''}${fontSizePx}px ${fontDef.cssFamily}`;
+  const measured = fontMeasureCtx.measureText(text || ' ');
+  const w = Math.max(4, Math.ceil(measured.width));
+  const h = Math.max(4, Math.ceil(fontSizePx * 1.15));
+  return { w, h };
+}
+
 function getObjectBounds(obj) {
   if (!obj) return null;
   switch (obj.type) {
     case 'text': {
-      const len = obj.text.length || 1;
-      const w = len * 6 * obj.size;
-      const h = 8 * obj.size;
-      return { x: obj.x, y: obj.y, w, h };
+      const dims = getTextDimensions(obj.text, obj.size, obj.font);
+      return { x: obj.x, y: obj.y, w: dims.w, h: dims.h };
     }
     case 'rect':
     case 'filled_rect':
@@ -240,15 +267,56 @@ function drawChar5x7(buf, charCode, startX, startY, size) {
   }
 }
 
-function drawText(buf, text, x, y, size) {
+function drawText(buf, text, x, y, size, fontId = 'default') {
   x = Math.round(x);
   y = Math.round(y);
   size = Math.max(1, Math.round(size));
-  const charWidth = 6 * size; 
+  text = String(text || '');
 
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-    drawChar5x7(buf, code, x + i * charWidth, y, size);
+  const fontDef = (typeof FONTS_CATALOG !== 'undefined' && FONTS_CATALOG[fontId]) ? FONTS_CATALOG[fontId] : null;
+
+  if (!fontDef || fontDef.id === 'default') {
+    const charWidth = 6 * size; 
+    for (let i = 0; i < text.length; i++) {
+      const code = text.charCodeAt(i);
+      drawChar5x7(buf, code, x + i * charWidth, y, size);
+    }
+    return;
+  }
+
+  if (!fontMeasureCanvas) {
+    fontMeasureCanvas = document.createElement('canvas');
+    fontMeasureCtx = fontMeasureCanvas.getContext('2d', { willReadFrequently: true });
+  }
+
+  const fontSizePx = Math.round((fontDef.charH || 10) * size);
+  const isBold = fontDef.id === 'helvB10';
+  const fontStyle = `${isBold ? 'bold ' : ''}${fontSizePx}px ${fontDef.cssFamily}`;
+
+  fontMeasureCtx.font = fontStyle;
+  const measured = fontMeasureCtx.measureText(text);
+  const textW = Math.max(2, Math.ceil(measured.width) + 4);
+  const textH = Math.max(2, Math.ceil(fontSizePx * 1.3) + 4);
+
+  fontMeasureCanvas.width = textW;
+  fontMeasureCanvas.height = textH;
+
+  fontMeasureCtx.clearRect(0, 0, textW, textH);
+  fontMeasureCtx.font = fontStyle;
+  fontMeasureCtx.textBaseline = 'top';
+  fontMeasureCtx.fillStyle = '#ffffff';
+  fontMeasureCtx.imageSmoothingEnabled = false;
+  fontMeasureCtx.fillText(text, 0, 0);
+
+  const imgData = fontMeasureCtx.getImageData(0, 0, textW, textH).data;
+
+  for (let r = 0; r < textH; r++) {
+    for (let c = 0; c < textW; c++) {
+      const alpha = imgData[(r * textW + c) * 4 + 3];
+      if (alpha > 100) {
+        setPixel(buf, x + c, y + r, 1);
+      }
+    }
   }
 }
 
@@ -275,7 +343,7 @@ function drawBitmap(buf, x, y, w, h, data, origW, origH) {
 function drawObjectToBuffer(obj, buf) {
   switch (obj.type) {
     case 'text':
-      drawText(buf, obj.text, obj.x, obj.y, obj.size);
+      drawText(buf, obj.text, obj.x, obj.y, obj.size, obj.font);
       break;
     case 'rect':
       drawRect(buf, obj.x, obj.y, obj.w, obj.h, false);

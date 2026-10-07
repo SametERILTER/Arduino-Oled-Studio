@@ -91,52 +91,178 @@ if (document.readyState === 'loading') {
   initPresetIcons();
 }
 
-document.querySelectorAll('.preset-icon-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const key = btn.dataset.preset;
-    let preset = PRESET_ICONS[key];
-    if (!preset) {
-      const svg = btn.querySelector('svg');
-      if (svg) {
-        const res = await rasterizeSvgToBitmap(svg, 16);
-        if (res) {
-          PRESET_ICONS[key] = { name: key, ...res };
-          preset = PRESET_ICONS[key];
-        }
-      }
+async function addPresetIconToScreen(key, svg) {
+  let preset = PRESET_ICONS[key];
+  if (!preset && svg) {
+    const res = await rasterizeSvgToBitmap(svg, 16);
+    if (res) {
+      PRESET_ICONS[key] = { name: key, ...res };
+      preset = PRESET_ICONS[key];
     }
-    if (!preset) return;
+  }
+  if (!preset) return;
 
-    pushHistory();
-    const presetName = (typeof t === 'function' ? t('preset_name_' + key) : null) || key;
-    const newBitmap = {
-      id: generateId(),
-      type: 'bitmap',
-      isIcon: true,
-      subtype: 'icon',
-      presetKey: key,
-      name: presetName,
-      x: Math.round((SCREEN_WIDTH - preset.w) / 2),
-      y: Math.round((SCREEN_HEIGHT - preset.h) / 2),
-      w: preset.w,
-      h: preset.h,
-      origW: preset.origW || preset.w,
-      origH: preset.origH || preset.h,
-      threshold: 128,
-      inverted: false,
-      ditherMode: 'threshold',
-      rawRgba: preset.rawRgba ? [...preset.rawRgba] : null,
-      data: [...preset.data],
-      visible: true
-    };
+  pushHistory();
+  const presetName = (typeof t === 'function' ? t('preset_name_' + key) : null) || key;
+  const newBitmap = {
+    id: generateId(),
+    type: 'bitmap',
+    isIcon: true,
+    subtype: 'icon',
+    presetKey: key,
+    name: presetName,
+    x: Math.round((SCREEN_WIDTH - preset.w) / 2),
+    y: Math.round((SCREEN_HEIGHT - preset.h) / 2),
+    w: preset.w,
+    h: preset.h,
+    origW: preset.origW || preset.w,
+    origH: preset.origH || preset.h,
+    threshold: 128,
+    inverted: false,
+    ditherMode: 'threshold',
+    rawRgba: preset.rawRgba ? [...preset.rawRgba] : null,
+    data: [...preset.data],
+    visible: true
+  };
 
-    state.objects.push(newBitmap);
-    selectObject(newBitmap.id);
-    setActiveTool('select');
-    renderAll();
-    updateArduinoCode();
+  state.objects.push(newBitmap);
+  selectObject(newBitmap.id);
+  setActiveTool('select');
+  renderAll();
+  updateArduinoCode();
+}
+
+document.querySelectorAll('.preset-icon-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.preset;
+    const svg = btn.querySelector('svg');
+    addPresetIconToScreen(key, svg);
   });
 });
+
+// --- ICONS MODAL & SEARCH FUNCTIONALITY ---
+const btnOpenIconsModal = document.getElementById('btnOpenIconsModal');
+const iconsModalOverlay = document.getElementById('iconsModalOverlay');
+const btnCloseIconsModal = document.getElementById('btnCloseIconsModal');
+const iconsModalGrid = document.getElementById('iconsModalGrid');
+const iconsSearchInput = document.getElementById('iconsSearchInput');
+const btnClearIconSearch = document.getElementById('btnClearIconSearch');
+const iconsModalNoResults = document.getElementById('iconsModalNoResults');
+const iconsModalCountBadge = document.getElementById('iconsModalCountBadge');
+
+let iconsModalBuilt = false;
+
+function buildIconsModalGrid() {
+  if (iconsModalBuilt && iconsModalGrid && iconsModalGrid.children.length > 0) return;
+  if (!iconsModalGrid) return;
+  iconsModalGrid.innerHTML = '';
+
+  const iconButtons = document.querySelectorAll('#presetIconsGrid .preset-icon-btn');
+  iconButtons.forEach(btn => {
+    const key = btn.dataset.preset;
+    const svg = btn.querySelector('svg');
+    if (!key || !svg) return;
+
+    const localizedName = (typeof t === 'function' ? t('preset_name_' + key) : null) || btn.title || key;
+    const card = document.createElement('div');
+    card.className = 'modal-icon-card';
+    card.dataset.preset = key;
+    card.dataset.name = localizedName.toLowerCase();
+    card.title = localizedName;
+
+    const svgClone = svg.cloneNode(true);
+    card.appendChild(svgClone);
+
+    const span = document.createElement('span');
+    span.className = 'modal-icon-label';
+    span.textContent = localizedName;
+    card.appendChild(span);
+
+    card.addEventListener('click', async () => {
+      await addPresetIconToScreen(key, svg);
+      closeIconsModal();
+    });
+
+    iconsModalGrid.appendChild(card);
+  });
+
+  iconsModalBuilt = true;
+  if (iconsModalCountBadge) {
+    iconsModalCountBadge.textContent = `${iconButtons.length} İkon`;
+  }
+}
+
+function openIconsModal() {
+  buildIconsModalGrid();
+  if (iconsModalOverlay) {
+    iconsModalOverlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+  if (iconsSearchInput) {
+    iconsSearchInput.value = '';
+    filterIconsModal('');
+    setTimeout(() => iconsSearchInput.focus(), 80);
+  }
+}
+
+function closeIconsModal() {
+  if (iconsModalOverlay) {
+    iconsModalOverlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+function filterIconsModal(query) {
+  const q = (query || '').trim().toLowerCase();
+  if (btnClearIconSearch) {
+    btnClearIconSearch.style.display = q ? 'block' : 'none';
+  }
+
+  let count = 0;
+  if (!iconsModalGrid) return;
+  const cards = iconsModalGrid.querySelectorAll('.modal-icon-card');
+  cards.forEach(card => {
+    const pKey = (card.dataset.preset || '').toLowerCase();
+    const pName = (card.dataset.name || '').toLowerCase();
+    const pTitle = (card.title || '').toLowerCase();
+    const match = !q || pKey.includes(q) || pName.includes(q) || pTitle.includes(q);
+    card.style.display = match ? 'flex' : 'none';
+    if (match) count++;
+  });
+
+  if (iconsModalNoResults) {
+    iconsModalNoResults.style.display = count === 0 ? 'flex' : 'none';
+  }
+  if (iconsModalCountBadge) {
+    iconsModalCountBadge.textContent = q 
+      ? (typeof t === 'function' ? `${count} / ${cards.length}` : `${count} / ${cards.length}`) 
+      : `${cards.length} İkon`;
+  }
+}
+
+window.openIconsModal = openIconsModal;
+window.closeIconsModal = closeIconsModal;
+
+if (btnOpenIconsModal) btnOpenIconsModal.addEventListener('click', openIconsModal);
+if (btnCloseIconsModal) btnCloseIconsModal.addEventListener('click', closeIconsModal);
+if (iconsModalOverlay) {
+  iconsModalOverlay.addEventListener('click', (e) => {
+    if (e.target === iconsModalOverlay) closeIconsModal();
+  });
+}
+if (iconsSearchInput) {
+  iconsSearchInput.addEventListener('input', (e) => {
+    filterIconsModal(e.target.value);
+  });
+}
+if (btnClearIconSearch) {
+  btnClearIconSearch.addEventListener('click', () => {
+    iconsSearchInput.value = '';
+    filterIconsModal('');
+    iconsSearchInput.focus();
+  });
+}
+
 
 inputImageBitmap.addEventListener('change', (e) => {
   const file = e.target.files[0];

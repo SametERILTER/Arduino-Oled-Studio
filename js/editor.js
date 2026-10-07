@@ -99,6 +99,7 @@ overlayCanvas.addEventListener('mousedown', (e) => {
       type: 'text',
       name: `${textLabel} ${state.objects.length + 1}`,
       text: 'OLED',
+      font: 'default',
       x: pos.x,
       y: pos.y,
       size: 1,
@@ -565,6 +566,8 @@ function updatePropertiesFormValues(obj) {
     dimensionProps.style.display = 'none';
     textSpecificProps.style.display = 'block';
     propText.value = obj.text;
+    const propTextFontEl = document.getElementById('propTextFont');
+    if (propTextFontEl) propTextFontEl.value = obj.font || 'default';
     propTextSize.value = obj.size;
     shapeSpecificProps.style.display = 'none';
     if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
@@ -699,6 +702,18 @@ propTextSize.addEventListener('change', () => {
   renderAll();
   updateArduinoCode();
 });
+
+const propTextFont = document.getElementById('propTextFont');
+if (propTextFont) {
+  propTextFont.addEventListener('change', () => {
+    const selObj = getSelectedObject();
+    if (!selObj || selObj.type !== 'text') return;
+    pushHistory();
+    selObj.font = propTextFont.value || 'default';
+    renderAll();
+    updateArduinoCode();
+  });
+}
 
 propFilled.addEventListener('change', () => {
   const selObj = getSelectedObject();

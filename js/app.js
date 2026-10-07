@@ -116,6 +116,16 @@ window.addEventListener('keydown', (e) => {
       closeCodeModal();
       return;
     }
+    const iconsModalOverlay = document.getElementById('iconsModalOverlay');
+    if (iconsModalOverlay && iconsModalOverlay.style.display !== 'none') {
+      if (typeof window.closeIconsModal === 'function') {
+        window.closeIconsModal();
+      } else {
+        iconsModalOverlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+      return;
+    }
     const animModalOverlay = document.getElementById('animModalOverlay');
     if (animModalOverlay && animModalOverlay.style.display !== 'none') {
       if (typeof window.closeAnimStudio === 'function') {
