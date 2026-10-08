@@ -2548,14 +2548,14 @@ body.dark-theme {
 
 /* Column 1: Templates & Parameters */
 .anim-col-templates {
-  width: 320px;
-  min-width: 300px;
+  width: 336px;
+  min-width: 310px;
   background: var(--bg-panel);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 16px 18px;
+  padding: 14px 16px;
   gap: 12px;
   flex-shrink: 0;
 }
@@ -3157,4 +3157,466 @@ body.dark-theme {
   border-radius: 4px;
   border: 1px dashed var(--border-subtle);
 }
+
+/* ==========================================================================
+   GIF Animation Studio Styles
+   ========================================================================== */
+
+.import-gif-btn {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%);
+  border: 1px dashed rgba(236, 72, 153, 0.45);
+  color: #f472b6;
+  margin-top: 6px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.import-gif-btn:hover {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.22) 0%, rgba(168, 85, 247, 0.22) 100%);
+  border-color: #ec4899;
+  color: #fbcfe8;
+  transform: none;
+}
+
+.import-gif-btn svg {
+  color: #f472b6;
+  flex-shrink: 0;
+}
+
+/* GIF Animation Studio - Integrated in Animation Studio */
+.gif-preview-box {
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.gif-drop-zone {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 44px 20px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 2px dashed rgba(59, 130, 246, 0.4);
+  border-radius: 14px;
+  box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.6);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.gif-drop-zone:hover,
+.gif-drop-zone.dragover {
+  border-color: #60a5fa;
+  background: rgba(30, 58, 138, 0.25);
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.25), inset 0 2px 14px rgba(0, 0, 0, 0.4);
+}
+
+.gif-drop-icon {
+  color: #60a5fa;
+  margin-bottom: 12px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.gif-drop-zone:hover .gif-drop-icon {
+  transform: none;
+  color: #93c5fd;
+}
+
+.gif-drop-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 6px;
+}
+
+.gif-drop-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  max-width: 320px;
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+
+.gif-choose-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  font-weight: 600;
+  font-size: 12.5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.gif-screen-stage {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-xs {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.gif-screen-bezel {
+  background: #090d16;
+  border: 1px solid var(--border-medium);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.gif-screen-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gif-screen-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.dot-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.gif-frames-pill {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: var(--text-muted);
+}
+
+.gif-canvas-stage {
+  background: #020406;
+  border: 2px solid #1a2234;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-height: 220px;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+#gifPlayerCanvas {
+  width: 256px;
+  height: 128px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #030708;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+}
+
+/* Player Toolbar */
+.gif-player-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.gif-playback-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gif-ctrl-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-main);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.gif-ctrl-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-medium);
+  color: #fff;
+}
+
+.gif-btn-play {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
+.gif-btn-play:hover {
+  background: rgba(59, 130, 246, 0.35);
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.gif-scrubber-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gif-range-input {
+  width: 100%;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.gif-scrubber-text {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.gif-speed-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gif-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.gif-speed-chip,
+.gif-size-chip {
+  padding: 4px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.gif-speed-chip:hover,
+.gif-size-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.gif-speed-chip.active,
+.gif-size-chip.active {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+/* Right Column: Settings */
+.gif-settings-column {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.gif-config-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gif-config-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.gif-inputs-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.gif-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gif-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gif-input-field label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.gif-input-field .text-input,
+.gif-input-field .select-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.gif-chk-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.gif-chk-label input[type="checkbox"] {
+  accent-color: #3b82f6;
+}
+
+/* Simple, Flat Memory Meter */
+.gif-memory-simple {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.gif-mem-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+
+.gif-mem-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11.5px;
+}
+
+.mem-progress-bar-bg {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mem-progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.mem-progress-bar-fill.safe {
+  background: #10b981;
+}
+
+.mem-progress-bar-fill.warn {
+  background: #f59e0b;
+}
+
+.mem-progress-bar-fill.danger {
+  background: #ef4444;
+}
+
+.mem-status-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.badge-safe {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-warn {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Actions Panel */
+.gif-actions-panel {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.gif-actions-panel button {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 12.5px;
+}
+
 

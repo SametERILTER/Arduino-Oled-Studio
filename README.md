@@ -83,7 +83,14 @@ The Animation Studio radically simplifies this workflow by introducing a visual,
 - **Interactive Visual Canvas**: Freely drag, reposition, and inspect animated elements directly on the virtual OLED display rather than guessing coordinates in code.
 - **Zero Flash Bloat (Pure Procedural Generation)**: Generates lightweight mathematical C++ drawing routines (~0 KB PROGMEM, ~16 bytes RAM) instead of bulky bitmap arrays, preserving microcontroller storage for your main application logic.
 - **Geometric Vectors & Quick Motions**: Animate rounded boxes, circles, dynamic lines, and text with one-click presets for common movement patterns (slide, bounce, pulse, blink).
-- **Instant Production-Ready Code**: Generates self-contained `.ino` sketches or modular `.h` headers for both **Adafruit SSD1306** and **U8g2** libraries with zero boilerplate setup.
+### Animated GIF Importer & Converter (New)
+
+- **Pure Client-Side GIF Decoding**: Upload any animated `.gif` file to instantly parse, extract, and composite all frames without external servers or plugins.
+- **Hardware Memory Safeguard**: Real-time Flash memory estimator for Arduino Uno (32 KB) and ESP32 with automatic warning badges to prevent memory exhaustion.
+- **Smart Frame Sampling**: Frame skipping (1x, 1/2, 1/3, 1/4) and max frame limits (6 to 24 frames or unlimited) to optimize playback speed and MCU storage.
+- **1-Bit Quantization**: Real-time Floyd-Steinberg error diffusion dithering and fixed thresholding with live preview.
+- **Interactive OLED Player**: Play/pause, frame step, timeline scrubber, and speed controls (0.5x, 1x, 1.5x, 2x).
+- **Direct Code Export**: Generates production-ready PROGMEM frame arrays and non-blocking `millis()` loop routines for both **Adafruit SSD1306** and **U8g2**.
 
 ---
 
@@ -135,6 +142,8 @@ ArduinoOledScreenEditor/
 ├── style.css           # Engineering UI stylesheet
 ├── i18n.js             # Dual-language localization engine (English / Turkish)
 ├── js/
+│   ├── omggif.js       # Lightweight client-side GIF 89a decoder
+│   ├── gif_studio.js   # Animated GIF parser, OLED player, and code generator
 │   ├── constants.js    # Display hardware profiles and 5x7 font tables
 │   ├── state.js        # Central state, display buffer, and undo/redo stacks
 │   ├── renderer.js     # Canvas drawing pipeline and pixel buffer math
@@ -142,6 +151,7 @@ ArduinoOledScreenEditor/
 │   ├── editor.js       # Pointer events, shape tools, alignment, and layer tree
 │   ├── icons.js        # Built-in sensor icon library and image dithering
 │   ├── codegen.js      # C++ code generation engines for Adafruit and U8g2
+│   ├── animations.js   # Procedural animation generator & keyframe engine
 │   └── app.js          # Application bootstrap, hotkeys, and JSON storage
 ├── README.md           # Documentation
 └── LICENSE             # MIT License
@@ -200,7 +210,7 @@ Features and capabilities currently under development or scheduled for upcoming 
 - [x] Offline project save and load via structured JSON
 - [x] Experimental font support
 - [ ] Web Serial API integration for live USB screen streaming directly to hardware
-- [ ] Multi-frame animation editor with framerate control and animated GIF/Sprite sheet export
+- [x] Multi-frame animated GIF converter & player with framerate control and PROGMEM code generation
 - [ ] Custom BDF and TrueType (TTF) font converter to PROGMEM character tables
 - [ ] Vector Bezier curves, arcs, and arbitrary polygon drawing tools
 - [ ] Run-Length Encoding (RLE) and LZ-based bitmap compression for memory-constrained MCUs (ATmega328P)

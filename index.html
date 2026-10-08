@@ -772,7 +772,7 @@
 
       <div class="sidebar-divider"></div>
 
-      <div class="sidebar-section-title" data-i18n="section_import_image">RESİM İÇE AKTAR</div>
+      <div class="sidebar-section-title" data-i18n="section_import_image">RESİM & ANİMASYON</div>
       <label class="import-image-btn" data-i18n-title="upload_image_title" title="1-bit Siyah-Beyaz Resim Yükle">
         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -782,6 +782,13 @@
         <span data-i18n="upload_image">Resim Yükle (.png, .bmp)</span>
         <input type="file" id="inputImageBitmap" accept="image/*" style="display:none;">
       </label>
+      <button type="button" class="import-image-btn import-gif-btn" id="btnUploadGif" data-i18n-title="upload_gif_title" title="GIF Yükle ve Arduino OLED Animasyonuna Dönüştür">
+        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>
+        <span data-i18n="upload_gif">GIF Animasyon (.gif)</span>
+        <input type="file" id="inputGifFile" accept=".gif,image/gif" style="display:none;">
+      </button>
 
       <div class="sidebar-footer-tip">
         <span data-i18n="shortcuts_label">Kısayollar:</span>
@@ -1280,6 +1287,12 @@
             </svg>
             <span data-i18n="anim_mode_custom">Özel Tasarımcı (Keyframe)</span>
           </button>
+          <button id="btnModeGif" class="anim-mode-tab" data-mode="gif">
+            <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            <span data-i18n="anim_mode_gif">GIF Animasyon</span>
+          </button>
         </div>
 
         <div class="modal-header-right">
@@ -1443,11 +1456,137 @@
             <div class="anim-params-container" id="customShapePropsContainer">
             </div>
           </div>
+
+          <!-- GIF Controls Panel (Left Side - Mode 3) -->
+          <div id="animGifPanel" style="display: none;">
+            <div class="anim-col-header" data-i18n="gif_section_size">BOYUTLANDIRMA & ÖLÇEK</div>
+            <div class="gif-chips-row">
+              <button type="button" class="gif-size-chip" data-size="128x64" data-i18n="gif_preset_fullscreen">Tam Ekran (128x64)</button>
+              <button type="button" class="gif-size-chip" data-size="64x64">64x64</button>
+              <button type="button" class="gif-size-chip" data-size="48x48">48x48</button>
+              <button type="button" class="gif-size-chip active" data-size="32x32">32x32 (İkon)</button>
+              <button type="button" class="gif-size-chip" data-size="16x16">16x16</button>
+            </div>
+
+            <div class="gif-inputs-grid-2" style="margin-top: 8px;">
+              <div class="gif-input-field">
+                <label for="gifInputWidth" data-i18n="gif_width">Genişlik (px)</label>
+                <input type="number" id="gifInputWidth" min="8" max="128" step="1" value="32" class="text-input">
+              </div>
+              <div class="gif-input-field">
+                <label for="gifInputHeight" data-i18n="gif_height">Yükseklik (px)</label>
+                <input type="number" id="gifInputHeight" min="8" max="64" step="1" value="32" class="text-input">
+              </div>
+            </div>
+            <div style="margin-top: 6px;">
+              <label class="gif-chk-label">
+                <input type="checkbox" id="gifChkKeepAspect" checked>
+                <span data-i18n="gif_keep_aspect">En-Boy Oranını Koru</span>
+              </label>
+            </div>
+
+            <div class="anim-col-header" style="margin-top: 14px;" data-i18n="gif_section_sampling">KARE OPTİMİZASYONU</div>
+            <div class="gif-inputs-grid-2">
+              <div class="gif-input-field">
+                <label for="gifSelectFrameSkip" data-i18n="gif_frame_skip_label">Kare Atlama:</label>
+                <select id="gifSelectFrameSkip" class="select-input">
+                  <option value="1" data-i18n="gif_skip_all">Tüm Kareler (1x)</option>
+                  <option value="2" data-i18n="gif_skip_every_2">Her 2 Karede 1 (1/2)</option>
+                  <option value="3" data-i18n="gif_skip_every_3">Her 3 Karede 1 (1/3)</option>
+                  <option value="4" data-i18n="gif_skip_every_4">Her 4 Karede 1 (1/4)</option>
+                </select>
+              </div>
+              <div class="gif-input-field">
+                <label for="gifSelectMaxFrames" data-i18n="gif_max_frames_label">Maksimum Kare:</label>
+                <select id="gifSelectMaxFrames" class="select-input">
+                  <option value="6">6 Kare</option>
+                  <option value="8">8 Kare</option>
+                  <option value="10">10 Kare</option>
+                  <option value="12" selected>12 Kare</option>
+                  <option value="16">16 Kare</option>
+                  <option value="24">24 Kare</option>
+                  <option value="unlimited" data-i18n="gif_max_unlimited">Sınırsız</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="anim-col-header" style="margin-top: 14px;" data-i18n="gif_section_dither">PİKSEL DÖNÜŞTÜRME</div>
+            <div class="gif-input-field">
+              <label for="gifSelectDitherMode" data-i18n="label_dither_mode">Dönüştürme Metodu:</label>
+              <select id="gifSelectDitherMode" class="select-input">
+                <option value="dither" data-i18n="gif_dither_fs">Floyd-Steinberg (Doğal Gri)</option>
+                <option value="threshold" data-i18n="gif_dither_thresh">Sabit Eşik (Keskin)</option>
+              </select>
+            </div>
+            <div class="gif-input-field" style="margin-top: 8px;">
+              <div class="flex-between">
+                <label for="gifRangeThreshold" data-i18n="gif_threshold_label">Eşik Seviyesi:</label>
+                <span id="gifValThreshold" class="val-badge">128</span>
+              </div>
+              <input type="range" id="gifRangeThreshold" min="0" max="255" value="128" class="range-slider">
+            </div>
+            <div style="margin-top: 6px;">
+              <label class="gif-chk-label">
+                <input type="checkbox" id="gifChkInvert">
+                <span data-i18n="gif_invert_label">Negatif (Ters Renk)</span>
+              </label>
+            </div>
+
+            <div class="anim-col-header" style="margin-top: 14px;" data-i18n="gif_section_memory">FLASH BELLEK KULLANIMI</div>
+            <div class="gif-input-field">
+              <label for="gifSelectBoard" data-i18n="gif_board_label">Hedef Kart:</label>
+              <select id="gifSelectBoard" class="select-input">
+                <option value="uno" selected>Arduino Uno / Nano (32 KB)</option>
+                <option value="mega">Arduino Mega 2560 (256 KB)</option>
+                <option value="pico">Raspberry Pi Pico (2 MB)</option>
+                <option value="esp8266">ESP8266 / NodeMCU (4 MB)</option>
+                <option value="esp32">ESP32 (4 MB)</option>
+                <option value="leonardo">Arduino Leonardo (32 KB)</option>
+                <option value="attiny85">ATtiny85 (8 KB)</option>
+              </select>
+            </div>
+            <div class="gif-memory-simple" style="margin-top: 8px;">
+              <div class="flex-between">
+                <span class="label-muted" data-i18n="gif_memory_total">Toplam Flash:</span>
+                <strong id="gifMemTotalText">0 B</strong>
+              </div>
+              <div class="gif-mem-bar-wrapper" style="margin-top: 6px;">
+                <div class="flex-between">
+                  <span id="gifMemBoardTitleText">Arduino Uno / Nano</span>
+                  <div class="flex-center-gap">
+                    <span id="gifMemUnoText">-%</span>
+                    <span id="gifMemUnoBadge" class="mem-status-badge badge-safe">Güvenli</span>
+                  </div>
+                </div>
+                <div class="mem-progress-bar-bg" style="margin-top: 4px;">
+                  <div id="gifMemUnoBar" class="mem-progress-bar-fill safe" style="width: 5%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="gif-actions-panel" style="margin-top: 14px;">
+              <button id="btnGifInsertCanvas" class="btn-primary" data-i18n-title="gif_btn_add_canvas" title="Tuvale Animasyonlu Nesne Olarak Ekle">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <polygon points="10 8 16 12 10 16 10 8" />
+                </svg>
+                <span data-i18n="gif_btn_add_canvas">Tuvale Ekle</span>
+              </button>
+              <button id="btnGifInsertScreens" class="btn-subtle" data-i18n-title="gif_btn_add_screens" title="Tüm Kareleri Bağımsız Ekran Sekmeleri Olarak Aktar">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                  <rect x="2" y="2" width="16" height="16" rx="2" />
+                  <path d="M6 18v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2" />
+                </svg>
+                <span data-i18n="gif_btn_add_screens">Ekranlara Aktar</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Column 2: Interactive OLED Canvas Preview -->
+        <!-- Column 2: Interactive OLED Canvas / GIF Preview -->
         <div class="anim-col-preview">
-          <div class="anim-preview-box">
+          <!-- Procedural Mode Preview Box -->
+          <div class="anim-preview-box" id="animPreviewBoxProcedural">
             <div class="anim-oled-frame">
               <div class="anim-oled-screen">
                 <canvas id="animStudioCanvas" width="128" height="64"></canvas>
@@ -1477,6 +1616,98 @@
                 <button class="anim-emotion-btn" data-emotion="sleep" data-i18n="anim_emo_sleep">Uyu</button>
                 <button class="anim-emotion-btn" data-emotion="idle" data-i18n="anim_emo_idle">Normal</button>
                 <button class="anim-emotion-btn" data-emotion="saccade" data-i18n="anim_emo_saccade">Rastgele</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- GIF Mode Preview Box -->
+          <div class="anim-preview-box gif-preview-box" id="animPreviewBoxGif" style="display: none;">
+            <!-- Dropzone when no GIF is loaded yet -->
+            <div id="gifDropZone" class="gif-drop-zone">
+              <div class="gif-drop-icon">
+                <svg viewBox="0 0 24 24" width="42" height="42" stroke="currentColor" stroke-width="1.6" fill="none">
+                  <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/>
+                  <line x1="7" y1="2" x2="7" y2="22"/>
+                  <line x1="17" y1="2" x2="17" y2="22"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <line x1="2" y1="7" x2="7" y2="7"/>
+                  <line x1="2" y1="17" x2="7" y2="17"/>
+                  <line x1="17" y1="17" x2="22" y2="17"/>
+                  <line x1="17" y1="7" x2="22" y2="7"/>
+                </svg>
+              </div>
+              <div class="gif-drop-title" data-i18n="gif_drop_title">GIF Dosyası Yükleyin</div>
+              <div class="gif-drop-subtitle" data-i18n="gif_drop_subtitle">Bir .gif dosyasını buraya sürükleyin veya aşağıdaki butona tıklayın</div>
+              <button type="button" class="btn-primary gif-choose-btn" id="btnChooseGifFile">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span data-i18n="gif_select_btn">GIF Dosyası Seç (.gif)</span>
+              </button>
+            </div>
+
+            <!-- OLED Player Stage when GIF is loaded -->
+            <div id="gifScreenStage" class="gif-screen-stage" style="display: none;">
+              <div class="gif-screen-bezel">
+                <div class="gif-screen-header">
+                  <div class="flex-between" style="width: 100%;">
+                    <span id="gifFramesSummaryBadge" class="gif-frames-pill">0 / 0 Frames</span>
+                    <button type="button" class="btn-subtle btn-xs" id="btnChangeGifFile" data-i18n-title="gif_change_file" title="Farklı GIF Seç">
+                      <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span data-i18n="gif_change_file">Değiştir</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="gif-canvas-stage">
+                  <canvas id="gifPlayerCanvas" width="128" height="64"></canvas>
+                </div>
+              </div>
+
+              <!-- Player Controls Bar -->
+              <div class="gif-player-toolbar">
+                <div class="gif-playback-buttons">
+                  <button id="btnGifPrevFrame" class="gif-ctrl-btn" data-i18n-title="gif_playback_prev" title="Önceki Kare">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                      <polygon points="19 20 9 12 19 4 19 20" />
+                      <line x1="5" y1="19" x2="5" y2="5" />
+                    </svg>
+                  </button>
+                  <button id="btnGifPlayPause" class="gif-ctrl-btn gif-btn-play" data-i18n-title="gif_playback_play" title="Oynat / Duraklat">
+                    <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
+                      <rect x="6" y="4" width="4" height="16" />
+                      <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                  </button>
+                  <button id="btnGifNextFrame" class="gif-ctrl-btn" data-i18n-title="gif_playback_next" title="Sonraki Kare">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none">
+                      <polygon points="5 4 15 12 5 20 5 4" />
+                      <line x1="19" y1="5" x2="19" y2="19" />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Scrubber Slider -->
+                <div class="gif-scrubber-group">
+                  <input type="range" id="gifFrameScrubber" min="0" max="0" value="0" class="gif-range-input">
+                  <span id="gifScrubberLabel" class="gif-scrubber-text">1 / 1 (0.10s)</span>
+                </div>
+
+                <!-- Speed Selector -->
+                <div class="gif-speed-group">
+                  <span class="label-muted" data-i18n="gif_playback_speed">Hız:</span>
+                  <div class="gif-chips-row">
+                    <button type="button" class="gif-speed-chip" data-speed="0.5">0.5x</button>
+                    <button type="button" class="gif-speed-chip active" data-speed="1.0">1x</button>
+                    <button type="button" class="gif-speed-chip" data-speed="1.5">1.5x</button>
+                    <button type="button" class="gif-speed-chip" data-speed="2.0">2x</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1573,16 +1804,18 @@
     </div>
   </div>
 
-  <script src="i18n.js"></script>
-  <script src="js/constants.js"></script>
-  <script src="js/state.js"></script>
-  <script src="js/renderer.js"></script>
-  <script src="js/screens.js"></script>
-  <script src="js/editor.js"></script>
-  <script src="js/icons.js"></script>
-  <script src="js/codegen.js"></script>
-  <script src="js/animations.js"></script>
-  <script src="js/app.js"></script>
+  <script src="i18n.js?v=1.2"></script>
+  <script src="js/omggif.js?v=1.2"></script>
+  <script src="js/constants.js?v=1.2"></script>
+  <script src="js/state.js?v=1.2"></script>
+  <script src="js/renderer.js?v=1.2"></script>
+  <script src="js/screens.js?v=1.2"></script>
+  <script src="js/editor.js?v=1.2"></script>
+  <script src="js/icons.js?v=1.2"></script>
+  <script src="js/codegen.js?v=1.2"></script>
+  <script src="js/animations.js?v=1.2"></script>
+  <script src="js/gif_studio.js?v=1.2"></script>
+  <script src="js/app.js?v=1.2"></script>
 </body>
 
 </html>

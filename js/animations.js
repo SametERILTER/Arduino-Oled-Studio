@@ -635,6 +635,12 @@
   // --- C++ Code Generators ---
 
   function generateCode() {
+    if (studioMode === 'gif') {
+      if (typeof window.generateGifCode === 'function') {
+        return window.generateGifCode(codeLibrary, codeScope);
+      }
+      return '// GIF kod üretici hazır değil. Lütfen bir GIF dosyası yükleyin.';
+    }
     if (studioMode === 'custom') {
       return generateCustomAnimationCode();
     }
@@ -2366,21 +2372,47 @@ void loop() {
 
     const presetsPanel = document.getElementById('animPresetsPanel');
     const customPanel = document.getElementById('animCustomPanel');
+    const gifPanel = document.getElementById('animGifPanel');
+    const previewProcedural = document.getElementById('animPreviewBoxProcedural');
+    const previewGif = document.getElementById('animPreviewBoxGif');
     const eyeBar = document.getElementById('animEyeActionsBar');
     const canvasHint = document.getElementById('animCanvasHint');
 
-    if (mode === 'custom') {
+    if (mode === 'gif') {
+      if (presetsPanel) presetsPanel.style.display = 'none';
+      if (customPanel) customPanel.style.display = 'none';
+      if (gifPanel) gifPanel.style.display = 'block';
+      if (previewProcedural) previewProcedural.style.display = 'none';
+      if (previewGif) previewGif.style.display = 'flex';
+      if (eyeBar) eyeBar.style.display = 'none';
+      if (canvasHint) canvasHint.style.display = 'none';
+      if (typeof window.onGifStudioActivated === 'function') {
+        window.onGifStudioActivated();
+      }
+    } else if (mode === 'custom') {
       if (presetsPanel) presetsPanel.style.display = 'none';
       if (customPanel) customPanel.style.display = 'block';
+      if (gifPanel) gifPanel.style.display = 'none';
+      if (previewProcedural) previewProcedural.style.display = 'flex';
+      if (previewGif) previewGif.style.display = 'none';
       if (eyeBar) eyeBar.style.display = 'none';
       if (canvasHint) canvasHint.style.display = 'block';
+      if (typeof window.onGifStudioDeactivated === 'function') {
+        window.onGifStudioDeactivated();
+      }
       renderCustomLayersList();
       renderCustomShapeProps();
     } else {
       if (presetsPanel) presetsPanel.style.display = 'block';
       if (customPanel) customPanel.style.display = 'none';
+      if (gifPanel) gifPanel.style.display = 'none';
+      if (previewProcedural) previewProcedural.style.display = 'flex';
+      if (previewGif) previewGif.style.display = 'none';
       if (canvasHint) canvasHint.style.display = 'none';
       if (eyeBar) eyeBar.style.display = currentTemplate === 'robot_eyes' ? 'flex' : 'none';
+      if (typeof window.onGifStudioDeactivated === 'function') {
+        window.onGifStudioDeactivated();
+      }
       setupPresetInputs();
     }
 
@@ -2859,9 +2891,13 @@ void loop() {
 
   // --- Modal Open/Close Controls ---
 
-  function openAnimStudio() {
+  function openAnimStudio(initialMode) {
     const modal = document.getElementById('animModalOverlay');
     if (!modal) return;
+
+    if (initialMode) {
+      studioMode = initialMode;
+    }
 
     modal.style.display = 'flex';
     animActive = true;
@@ -2901,6 +2937,9 @@ void loop() {
       cancelAnimationFrame(animFrameId);
       animFrameId = null;
     }
+    if (typeof window.onGifStudioDeactivated === 'function') {
+      window.onGifStudioDeactivated();
+    }
   }
 
   function copyAnimCode() {
@@ -2922,7 +2961,15 @@ void loop() {
     const code = generateCode();
     const ext = codeScope === 'modular' ? 'h' : 'ino';
     const blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
-    const filename = studioMode === 'custom' ? `custom_animation_oled.${ext}` : `${currentTemplate}_oled.${ext}`;
+    let filename;
+    if (studioMode === 'gif') {
+      const baseName = (typeof window.getGifFilename === 'function' ? window.getGifFilename() : 'gif_animation');
+      filename = `${baseName}_oled.${ext}`;
+    } else if (studioMode === 'custom') {
+      filename = `custom_animation_oled.${ext}`;
+    } else {
+      filename = `${currentTemplate}_oled.${ext}`;
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -2976,6 +3023,11 @@ void loop() {
 
     const tabCustom = document.getElementById('btnModeCustom');
     if (tabCustom) tabCustom.addEventListener('click', () => setStudioMode('custom'));
+
+    const tabGif = document.getElementById('btnModeGif');
+    if (tabGif) {
+      tabGif.addEventListener('click', () => setStudioMode('gif'));
+    }
 
     // Template Selector Cards
     const templateCards = document.querySelectorAll('.anim-tpl-card');
@@ -3221,4 +3273,6 @@ void loop() {
 
   window.openAnimStudio = openAnimStudio;
   window.closeAnimStudio = closeAnimStudio;
+  window.setStudioMode = setStudioMode;
+  window.updateAnimStudioCode = updateCodeView;
 })();
