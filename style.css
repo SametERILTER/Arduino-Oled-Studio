@@ -502,13 +502,37 @@ body.dark-theme {
   padding: 1px 6px;
 }
 
+.btn-sidebar-icon-lib {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  margin: 2px 0 4px;
+  background-color: var(--bg-card);
+  border: 1px dashed var(--border-medium);
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.btn-sidebar-icon-lib:hover {
+  border-color: var(--accent);
+  color: var(--text-main);
+  background-color: var(--bg-hover);
+}
+
+.btn-sidebar-icon-lib:hover .badge-count {
+  border-color: var(--border-medium);
+  color: var(--text-main);
+}
+
 .preset-icons-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-  max-height: 220px;
-  overflow-y: auto;
-  padding-right: 2px;
+  display: none !important;
 }
 
 .preset-icon-btn {

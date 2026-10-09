@@ -215,16 +215,13 @@
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-header">
         <span class="sidebar-section-title" data-i18n="section_preset_icons">HAZIR İKONLAR</span>
-        <div class="sidebar-section-right-group">
-          <span class="badge-count">84</span>
-          <button id="btnOpenIconsModal" class="icon-expand-btn" data-i18n-title="btn_expand_icons_title" title="Tüm İkonları Gör ve Ara">
-            <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-            </svg>
-          </button>
-        </div>
       </div>
-      <div class="preset-icons-grid" id="presetIconsGrid">
+      <button type="button" class="btn-sidebar-icon-lib" id="btnOpenIconsModal" data-i18n-title="btn_expand_icons_title" title="Tüm İkonları Gör ve Ara">
+        <span data-i18n="btn_browse_icons">İkon Kütüphanesini Gör</span>
+        <span class="badge-count">84</span>
+      </button>
+
+      <div class="preset-icons-grid" id="presetIconsGrid" style="display: none;">
         <button class="preset-icon-btn" data-preset="battery_full" data-i18n-title="icon_battery_full" title="Batarya (Dolu)">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
             <rect x="2" y="7" width="16" height="10" rx="2" />
