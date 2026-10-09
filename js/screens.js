@@ -19,11 +19,13 @@ let contextMenuTargetScreen = null;
 let contextMenuTargetTab = null;
 
 function getActiveScreen() {
-  return state.screens.find(s => s.id === state.activeScreenId) || state.screens[0];
+  if (!state.screens || state.screens.length === 0) return null;
+  return state.screens.find(s => s.id === state.activeScreenId) || null;
 }
 
 function syncActiveScreen() {
-  const s = getActiveScreen();
+  if (!state.activeScreenId || !state.screens) return;
+  const s = state.screens.find(s => s.id === state.activeScreenId);
   if (s) {
     s.objects = state.objects;
     s.pixels = state.pixels;
@@ -139,12 +141,14 @@ function renderScreensTabBar() {
     tab.appendChild(actions);
 
     tab.addEventListener('click', () => {
+      if (deletingScreenIds.has(screen.id)) return;
       if (state.activeScreenId !== screen.id) {
         switchScreen(screen.id);
       }
     });
 
     tab.addEventListener('contextmenu', (e) => {
+      if (deletingScreenIds.has(screen.id)) return;
       e.preventDefault();
       contextMenuTargetScreen = screen;
       contextMenuTargetTab = tab;
@@ -269,6 +273,13 @@ function deleteScreen(screenId, tabElement) {
   if (!screen) return;
 
   const isLastScreen = state.screens.length <= 1;
+  const isCurrentActive = state.activeScreenId === screenId;
+
+  // Make sure the active screen's latest drawn state is synced before checking hasContent
+  if (isCurrentActive) {
+    syncActiveScreen();
+  }
+
   const hasContent = screen.objects.length > 0 || screen.pixels.some(p => p === 1) || screen.erasedPixels.some(p => p === 1);
 
   if (isLastScreen) {
@@ -300,16 +311,40 @@ function deleteScreen(screenId, tabElement) {
       screen.undoStack = [];
       screen.redoStack = [];
       screen.name = typeof t === 'function' ? `${t('default_screen_name')} 1` : 'Screen 1';
+      state.objects = [];
+      state.pixels = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
+      state.erasedPixels = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
+      state.undoStack = [];
+      state.redoStack = [];
+      selectObject(null);
       lastAddedScreenId = screen.id;
       renderScreensTabBar();
       switchScreen(screen.id);
     } else {
       const idx = state.screens.findIndex(s => s.id === screenId);
       if (idx !== -1) {
-        state.screens.splice(idx, 1);
+        let targetScreenId = null;
         if (state.activeScreenId === screenId) {
-          const nextIdx = Math.max(0, idx - 1);
-          switchScreen(state.screens[nextIdx].id);
+          // Find adjacent screen to activate before removing current screen
+          const nextIdx = idx > 0 ? idx - 1 : idx + 1;
+          if (state.screens[nextIdx]) {
+            targetScreenId = state.screens[nextIdx].id;
+          }
+        }
+
+        // Remove from screens array
+        state.screens.splice(idx, 1);
+
+        if (state.activeScreenId === screenId) {
+          // Clear activeScreenId so switchScreen doesn't attempt to sync the deleted screen
+          state.activeScreenId = null;
+          const nextTarget = (targetScreenId && state.screens.some(s => s.id === targetScreenId))
+            ? targetScreenId
+            : (state.screens[0] ? state.screens[0].id : null);
+
+          if (nextTarget) {
+            switchScreen(nextTarget);
+          }
         } else {
           renderScreensTabBar();
           updateArduinoCode();

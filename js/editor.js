@@ -444,9 +444,11 @@ function changeScreenProfile(profileKey) {
     s.undoStack = [];
     s.redoStack = [];
   });
-  const act = getActiveScreen();
-  state.pixels = act.pixels;
-  state.erasedPixels = act.erasedPixels;
+  const act = getActiveScreen() || state.screens[0];
+  if (act) {
+    state.pixels = act.pixels;
+    state.erasedPixels = act.erasedPixels;
+  }
 
   const pcbModel = document.querySelector('.pcb-model-text');
   if (pcbModel) pcbModel.textContent = profile.pcbText;
@@ -465,7 +467,7 @@ if (screenTypeSelect) {
 
 btnClearAll.addEventListener('click', () => {
   if (state.objects.length === 0 && state.pixels.every(p => p === 0) && state.erasedPixels.every(p => p === 0)) return;
-  const currentScreen = getActiveScreen();
+  const currentScreen = getActiveScreen() || state.screens[0];
   const screenTitle = currentScreen ? currentScreen.name : 'bu ekranı';
   const confirmMsg = typeof t === 'function'
     ? t('confirm_clear_all', { name: screenTitle })

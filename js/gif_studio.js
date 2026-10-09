@@ -66,10 +66,20 @@
     }
 
     setupEventListeners();
+    updateMemoryMeter();
   }
 
   // --- Event Listeners ---
   function setupEventListeners() {
+    if (typeof onLanguageChange === 'function') {
+      onLanguageChange(() => {
+        updateMemoryMeter();
+        updateScrubberLabel();
+        if (codeDrawerOpen) {
+          updateCodeView();
+        }
+      });
+    }
     // 1. Left Sidebar Button & File Input
     const btnUploadGif = document.getElementById('btnUploadGif');
     const inputGifFile = document.getElementById('inputGifFile');
@@ -795,7 +805,9 @@
 
     const countSummary = document.getElementById('gifFramesSummaryBadge');
     if (countSummary) {
-      countSummary.textContent = `${total} / ${gifStudio.rawFrames.length} Frames`;
+      const unit = typeof t === 'function' && typeof getLang === 'function' && getLang() === 'tr' ? 'Kare' : 'Frames';
+      const rawCount = gifStudio.rawFrames ? gifStudio.rawFrames.length : 0;
+      countSummary.textContent = `${total} / ${rawCount} ${unit}`;
     }
   }
 
@@ -847,7 +859,7 @@
     const boardKey = gifStudio.targetBoard || 'uno';
     const boardSpec = BOARD_FLASH_SPECS[boardKey] || BOARD_FLASH_SPECS.uno;
     const usable = boardSpec.usableBytes;
-    const pct = Math.min(100, (totalBytes / usable) * 100);
+    const pct = count > 0 ? Math.min(100, (totalBytes / usable) * 100) : 0;
 
     const txtTotal = document.getElementById('gifMemTotalText');
     const txtBoardTitle = document.getElementById('gifMemBoardTitleText');
@@ -866,11 +878,13 @@
     }
 
     if (txtPercent) {
-      txtPercent.textContent = `%${pct.toFixed(1)} Flash`;
+      txtPercent.textContent = count > 0
+        ? (typeof getLang === 'function' && getLang() === 'en' ? `${pct.toFixed(1)}% Flash` : `%${pct.toFixed(1)} Flash`)
+        : '-%';
     }
 
     if (progressBar) {
-      progressBar.style.width = `${Math.min(100, Math.max(2, pct))}%`;
+      progressBar.style.width = count > 0 ? `${Math.min(100, Math.max(2, pct))}%` : '0%';
       progressBar.className = 'mem-progress-bar-fill';
       if (pct > 75) progressBar.classList.add('danger');
       else if (pct > 40) progressBar.classList.add('warn');
@@ -880,12 +894,15 @@
     if (statusBadge) {
       if (pct > 75) {
         statusBadge.className = 'mem-status-badge badge-danger';
-        statusBadge.textContent = (typeof t === 'function' ? t('gif_mem_danger') : 'Bellek Aşımı!');
+        statusBadge.setAttribute('data-i18n', 'gif_mem_danger');
+        statusBadge.textContent = (typeof t === 'function' ? t('gif_mem_danger') : 'Bellek Aşımı Riski!');
       } else if (pct > 40) {
         statusBadge.className = 'mem-status-badge badge-warn';
-        statusBadge.textContent = (typeof t === 'function' ? t('gif_mem_warn') : 'Yüksek Flash');
+        statusBadge.setAttribute('data-i18n', 'gif_mem_warn');
+        statusBadge.textContent = (typeof t === 'function' ? t('gif_mem_warn') : 'Dikkat: Yüksek');
       } else {
         statusBadge.className = 'mem-status-badge badge-safe';
+        statusBadge.setAttribute('data-i18n', 'gif_mem_safe');
         statusBadge.textContent = (typeof t === 'function' ? t('gif_mem_safe') : 'Güvenli');
       }
     }
@@ -919,6 +936,7 @@
     } else {
       if (dropZone) dropZone.style.display = 'flex';
       if (screenStage) screenStage.style.display = 'none';
+      updateMemoryMeter();
     }
 
     if (typeof window.updateAnimStudioCode === 'function') {
@@ -941,7 +959,11 @@
     const h = gifStudio.targetH;
     const rowBytes = Math.ceil(w / 8);
 
-    if (frameCount === 0) return '// Henüz bir GIF dosyası yüklenmedi.\n// Lütfen animasyonu görmek ve kodunu almak için bir .gif dosyası yükleyin.';
+    if (frameCount === 0) {
+      return (typeof t === 'function' && typeof getLang === 'function' && getLang() === 'en')
+        ? '// No GIF file loaded yet.\n// Please upload a .gif file to preview animation and generate code.'
+        : '// Henüz bir GIF dosyası yüklenmedi.\n// Lütfen animasyonu görmek ve kodunu almak için bir .gif dosyası yükleyin.';
+    }
 
     // Generate PROGMEM byte arrays for each frame
     let frameArrays = [];
@@ -1230,7 +1252,8 @@ void loop() {
       const btn = document.getElementById('btnCopyGifCode');
       if (btn) {
         const originalText = btn.innerHTML;
-        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"/></svg> Kopyalandı!`;
+        const copiedLabel = typeof t === 'function' ? t('copied') : 'Kopyalandı!';
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"/></svg> ${copiedLabel}`;
         setTimeout(() => { btn.innerHTML = originalText; }, 1800);
       }
     });

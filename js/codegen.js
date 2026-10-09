@@ -216,7 +216,8 @@ ${Array.from(bitmapDefs.values()).join('\n\n')}
 
 function generateActiveScreenOnlyCode(format) {
   syncActiveScreen();
-  const screen = getActiveScreen();
+  const screen = getActiveScreen() || state.screens[0];
+  if (!screen) return '';
   const sIdx = state.screens.findIndex(s => s.id === screen.id);
   const safeFnName = `drawScreen_${(screen.name || 'Screen').replace(/[^a-zA-Z0-9_]/g, '_')}`;
 
