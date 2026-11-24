@@ -176,13 +176,13 @@ if (menuRenameTab) {
 }
 
 if (menuClearTab) {
-  menuClearTab.addEventListener('click', () => {
+  menuClearTab.addEventListener('click', async () => {
     if (tabContextMenu) tabContextMenu.style.display = 'none';
     if (contextMenuTargetScreen) {
       const confirmMsg = typeof t === 'function' 
         ? t('confirm_clear_screen', { name: contextMenuTargetScreen.name })
         : `"${contextMenuTargetScreen.name}" ekranındaki tüm çizimleri temizlemek istediğinize emin misiniz?`;
-      if (confirm(confirmMsg)) {
+      if (await showConfirm(confirmMsg)) {
         contextMenuTargetScreen.objects = [];
         contextMenuTargetScreen.pixels = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
         contextMenuTargetScreen.erasedPixels = new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
@@ -267,7 +267,7 @@ function addNewScreen(name) {
 
 const deletingScreenIds = new Set();
 
-function deleteScreen(screenId, tabElement) {
+async function deleteScreen(screenId, tabElement) {
   if (deletingScreenIds.has(screenId)) return;
   const screen = state.screens.find(s => s.id === screenId);
   if (!screen) return;
@@ -287,7 +287,7 @@ function deleteScreen(screenId, tabElement) {
       const confirmLast = typeof t === 'function'
         ? t('confirm_last_screen_clear', { name: screen.name })
         : `"${screen.name}" ekranındaki tüm çizimler temizlenecek. Devam etmek istiyor musunuz?`;
-      if (!confirm(confirmLast)) {
+      if (!(await showConfirm(confirmLast))) {
         return;
       }
     }
@@ -295,7 +295,7 @@ function deleteScreen(screenId, tabElement) {
     const confirmDel = typeof t === 'function'
       ? t('confirm_delete_screen', { name: screen.name })
       : `"${screen.name}" adlı ekranı silmek istediğinize emin misiniz?`;
-    if (!confirm(confirmDel)) {
+    if (!(await showConfirm(confirmDel))) {
       return;
     }
   }

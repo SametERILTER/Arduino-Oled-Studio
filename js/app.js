@@ -72,7 +72,7 @@ inputFileJson.addEventListener('change', (e) => {
         switchScreen('screen_1');
       }
     } catch (err) {
-      alert(typeof t === 'function' ? t('alert_invalid_json') : 'Geçersiz JSON proje dosyası!');
+      showToast(typeof t === 'function' ? t('alert_invalid_json') : 'Geçersiz JSON proje dosyası!', 'error');
     }
     inputFileJson.value = '';
   };
@@ -86,6 +86,39 @@ btnExportIno.addEventListener('click', () => {
   const blob = new Blob([code], { type: 'text/plain' });
   downloadBlob(blob, filename);
 });
+
+function pasteObjectsFromList(sourceList, i18nKey, fallbackSuffix) {
+  if (!sourceList || sourceList.length === 0) return;
+  pushHistory();
+  const newIds = [];
+  for (const src of sourceList) {
+    const copy = JSON.parse(JSON.stringify(src));
+    copy.id = generateId();
+    copy.name = `${copy.name || copy.type} (Copy)`;
+    if (copy.type === 'line') {
+      copy.x1 = Math.min(SCREEN_WIDTH - 1, copy.x1 + 4);
+      copy.y1 = Math.min(SCREEN_HEIGHT - 1, copy.y1 + 4);
+      copy.x2 = Math.min(SCREEN_WIDTH - 1, copy.x2 + 4);
+      copy.y2 = Math.min(SCREEN_HEIGHT - 1, copy.y2 + 4);
+    } else {
+      copy.x = Math.min(SCREEN_WIDTH - 2, (copy.x || 0) + 4);
+      copy.y = Math.min(SCREEN_HEIGHT - 2, (copy.y || 0) + 4);
+    }
+    state.objects.push(copy);
+    newIds.push(copy.id);
+  }
+  state.selectedIds = newIds;
+  state.selectedId = newIds[newIds.length - 1] || null;
+  setActiveTool('select');
+  updatePropertiesPanel();
+  renderAll();
+  updateArduinoCode();
+
+  const msg = typeof t === 'function'
+    ? t(i18nKey, { count: newIds.length })
+    : `${newIds.length} ${fallbackSuffix}`;
+  showToast(msg, 'success', 1800);
+}
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -154,44 +187,80 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+    e.preventDefault();
+    if (state.objects.length > 0) {
+      state.selectedIds = state.objects.filter(o => o.visible !== false).map(o => o.id);
+      state.selectedId = state.selectedIds[state.selectedIds.length - 1] || null;
+      setActiveTool('select');
+      updatePropertiesPanel();
+      renderAll();
+    }
+    return;
+  }
+
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+    const selObjs = getSelectedObjects();
+    if (selObjs.length > 0) {
+      e.preventDefault();
+      state.clipboard = JSON.parse(JSON.stringify(selObjs));
+      const msg = typeof t === 'function'
+        ? t('toast_copied_obj', { count: selObjs.length })
+        : `${selObjs.length} nesne kopyalandı`;
+      showToast(msg, 'info', 1800);
+    }
+    return;
+  }
+
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+    if (state.clipboard && state.clipboard.length > 0) {
+      e.preventDefault();
+      pasteObjectsFromList(state.clipboard, 'toast_pasted_obj', 'nesne yapıştırıldı');
+    }
+    return;
+  }
+
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+    const selObjs = getSelectedObjects();
+    if (selObjs.length > 0) {
+      e.preventDefault();
+      pasteObjectsFromList(selObjs, 'toast_duplicated_obj', 'nesne çoğaltıldı');
+    }
+    return;
+  }
+
   if (e.key === 'Delete' || e.key === 'Backspace') {
-    if (state.selectedId) {
+    if (state.selectedIds.length > 0 || state.selectedId) {
       e.preventDefault();
       deleteSelectedObject();
     }
     return;
   }
 
-  const selObj = getSelectedObject();
-  if (selObj) {
+  const selObjs = getSelectedObjects();
+  if (selObjs.length > 0) {
     const step = e.shiftKey ? 5 : 1;
-    let moved = false;
+    let dx = 0;
+    let dy = 0;
 
-    if (e.key === 'ArrowLeft') {
-      pushHistory();
-      if (selObj.type === 'line') { selObj.x1 -= step; selObj.x2 -= step; }
-      else { selObj.x -= step; }
-      moved = true;
-    } else if (e.key === 'ArrowRight') {
-      pushHistory();
-      if (selObj.type === 'line') { selObj.x1 += step; selObj.x2 += step; }
-      else { selObj.x += step; }
-      moved = true;
-    } else if (e.key === 'ArrowUp') {
-      pushHistory();
-      if (selObj.type === 'line') { selObj.y1 -= step; selObj.y2 -= step; }
-      else { selObj.y -= step; }
-      moved = true;
-    } else if (e.key === 'ArrowDown') {
-      pushHistory();
-      if (selObj.type === 'line') { selObj.y1 += step; selObj.y2 += step; }
-      else { selObj.y += step; }
-      moved = true;
-    }
+    if (e.key === 'ArrowLeft') dx = -step;
+    else if (e.key === 'ArrowRight') dx = step;
+    else if (e.key === 'ArrowUp') dy = -step;
+    else if (e.key === 'ArrowDown') dy = step;
 
-    if (moved) {
+    if (dx !== 0 || dy !== 0) {
       e.preventDefault();
-      updatePropertiesFormValues(selObj);
+      pushHistory();
+      for (const obj of selObjs) {
+        if (obj.type === 'line') {
+          obj.x1 += dx; obj.x2 += dx;
+          obj.y1 += dy; obj.y2 += dy;
+        } else {
+          obj.x += dx;
+          obj.y += dy;
+        }
+      }
+      if (selObjs.length === 1) updatePropertiesFormValues(selObjs[0]);
       renderAll();
       updateArduinoCode();
       return;

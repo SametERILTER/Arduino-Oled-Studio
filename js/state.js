@@ -15,12 +15,17 @@ const state = {
   erasedPixels: new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT),
   objects: [],
   selectedId: null,
+  selectedIds: [],
+  clipboard: [],
+  i2cAddress: '0x3C',
 
   isDrawing: false,
-  dragMode: null, 
-  resizeHandle: null, 
+  dragMode: null,
+  resizeHandle: null,
   dragStart: { x: 0, y: 0 },
   initialObjState: null,
+  initialMultiStates: null,
+  marqueeRect: null,
   creationPreview: null,
   currentMousePos: { x: -1, y: -1 },
 
@@ -146,6 +151,7 @@ function undo() {
   state.erasedPixels = previous.erasedPixels ? new Uint8Array(previous.erasedPixels) : new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
   state.objects = previous.objects;
   state.selectedId = previous.selectedId;
+  state.selectedIds = previous.selectedId ? [previous.selectedId] : [];
   syncActiveScreen();
   updateHistoryButtons();
   updatePropertiesPanel();
@@ -167,6 +173,7 @@ function redo() {
   state.erasedPixels = next.erasedPixels ? new Uint8Array(next.erasedPixels) : new Uint8Array(SCREEN_WIDTH * SCREEN_HEIGHT);
   state.objects = next.objects;
   state.selectedId = next.selectedId;
+  state.selectedIds = next.selectedId ? [next.selectedId] : [];
   syncActiveScreen();
   updateHistoryButtons();
   updatePropertiesPanel();
@@ -177,4 +184,58 @@ function redo() {
 function updateHistoryButtons() {
   btnUndo.disabled = state.undoStack.length === 0;
   btnRedo.disabled = state.redoStack.length === 0;
+}
+
+function showToast(message, type = 'info', duration = 2600) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast-item toast-${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('toast-hiding');
+    setTimeout(() => toast.remove(), 200);
+  }, duration);
+}
+
+function showConfirm(message) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('confirmModalOverlay');
+    const msgEl = document.getElementById('confirmModalMessage');
+    const btnOk = document.getElementById('btnConfirmOk');
+    const btnCancel = document.getElementById('btnConfirmCancel');
+
+    if (!overlay || !msgEl || !btnOk || !btnCancel) {
+      resolve(window.confirm(message));
+      return;
+    }
+
+    msgEl.textContent = message;
+    overlay.style.display = 'flex';
+
+    const cleanup = (result) => {
+      overlay.style.display = 'none';
+      btnOk.removeEventListener('click', onOk);
+      btnCancel.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onBackdrop);
+      window.removeEventListener('keydown', onKey);
+      resolve(result);
+    };
+
+    const onOk = () => cleanup(true);
+    const onCancel = () => cleanup(false);
+    const onBackdrop = (e) => { if (e.target === overlay) cleanup(false); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); cleanup(false); }
+      else if (e.key === 'Enter') { e.preventDefault(); cleanup(true); }
+    };
+
+    btnOk.addEventListener('click', onOk);
+    btnCancel.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onBackdrop);
+    window.addEventListener('keydown', onKey);
+  });
 }

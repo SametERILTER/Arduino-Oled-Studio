@@ -396,7 +396,9 @@
         loadGifFromArrayBuffer(arrayBuffer, file.name);
       } catch (err) {
         console.error('Error parsing GIF:', err);
-        alert((typeof t === 'function' ? t('gif_error_invalid') : 'Geçersiz veya bozuk GIF dosyası.') + ' ' + (err.message || ''));
+        const msg = (typeof t === 'function' ? t('gif_error_invalid') : 'Geçersiz veya bozuk GIF dosyası.') + ' ' + (err.message || '');
+        if (typeof showToast === 'function') showToast(msg, 'error');
+        else alert(msg);
       }
     };
     reader.readAsArrayBuffer(file);

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Press+Start+2P&display=swap"
     rel="stylesheet">
 </head>
 
@@ -1093,7 +1093,9 @@
               <button id="btnAlignLeft" class="btn-tiny" data-i18n-title="align_left_title" title="Sola Daya" data-i18n="align_left">Sol</button>
               <button id="btnAlignCenterH" class="btn-tiny" data-i18n-title="align_center_h_title" title="Yatay Ortala" data-i18n="align_center_h">Yatay Orta</button>
               <button id="btnAlignRight" class="btn-tiny" data-i18n-title="align_right_title" title="Sağa Daya" data-i18n="align_right">Sağ</button>
+              <button id="btnAlignTop" class="btn-tiny" data-i18n-title="align_top_title" title="Üste Daya" data-i18n="align_top">Üst</button>
               <button id="btnAlignCenterV" class="btn-tiny" data-i18n-title="align_center_v_title" title="Dikey Ortala" data-i18n="align_center_v">Dikey Orta</button>
+              <button id="btnAlignBottom" class="btn-tiny" data-i18n-title="align_bottom_title" title="Alta Daya" data-i18n="align_bottom">Alt</button>
             </div>
           </div>
         </div>
@@ -1178,6 +1180,14 @@
             </select>
           </div>
 
+          <div class="modal-opt-group">
+            <span class="modal-opt-label" data-i18n="label_i2c_addr">I2C:</span>
+            <select id="modalI2cSelect" class="select-input select-input-sm">
+              <option value="0x3C" selected>0x3C</option>
+              <option value="0x3D">0x3D</option>
+            </select>
+          </div>
+
           <button id="modalBtnCopyCode" class="btn-primary" data-i18n-title="copy_code_title" title="Kodu Panoya Kopyala">
             <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -1226,7 +1236,12 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input type="text" id="iconsSearchInput" class="icons-search-input" data-i18n-placeholder="ph_search_icons" placeholder="İkon ara (örn: wifi, pil, saat, kalp)...">
-          <button id="btnClearIconSearch" class="btn-clear-search" style="display: none;" title="Temizle">✕</button>
+          <button id="btnClearIconSearch" class="btn-clear-search" style="display: none;" title="Temizle">
+            <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2.2" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         <div class="modal-header-right">
@@ -1800,6 +1815,28 @@
       <span data-i18n="ctx_close">Close Tab</span>
     </div>
   </div>
+
+  <!-- Custom Confirm Modal -->
+  <div id="confirmModalOverlay" class="code-modal-overlay confirm-modal-overlay" style="display: none;">
+    <div class="confirm-modal-box" role="dialog" aria-modal="true">
+      <div class="confirm-modal-header">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" class="confirm-icon">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span class="confirm-modal-title" data-i18n="confirm_title">Onay</span>
+      </div>
+      <p id="confirmModalMessage" class="confirm-modal-message"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" id="btnConfirmCancel" class="btn-subtle" data-i18n="btn_cancel">İptal</button>
+        <button type="button" id="btnConfirmOk" class="btn-danger-solid" data-i18n="btn_confirm">Onayla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
   <script src="i18n.js?v=1.2"></script>
   <script src="js/omggif.js?v=1.2"></script>

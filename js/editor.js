@@ -64,8 +64,9 @@ overlayCanvas.addEventListener('mousedown', (e) => {
   }
 
   if (tool === 'select') {
-    const selObj = getSelectedObject();
-    if (selObj) {
+    const selObjs = getSelectedObjects();
+    if (selObjs.length === 1) {
+      const selObj = selObjs[0];
       const bounds = getObjectBounds(selObj);
       const handle = getHandleAt(pos, bounds);
       if (handle) {
@@ -79,13 +80,26 @@ overlayCanvas.addEventListener('mousedown', (e) => {
 
     const clickedObj = getObjectAt(pos);
     if (clickedObj) {
-      selectObject(clickedObj.id);
-      pushHistory();
-      state.dragMode = 'move';
-      state.initialObjState = JSON.parse(JSON.stringify(clickedObj));
+      if (e.shiftKey) {
+        selectObject(clickedObj.id, true);
+      } else if (!state.selectedIds.includes(clickedObj.id)) {
+        selectObject(clickedObj.id, false);
+      }
+
+      const activeSelection = getSelectedObjects();
+      if (activeSelection.length > 0 && state.selectedIds.includes(clickedObj.id)) {
+        pushHistory();
+        state.dragMode = 'move';
+        state.initialMultiStates = activeSelection.map(o => ({
+          id: o.id,
+          snapshot: JSON.parse(JSON.stringify(o))
+        }));
+        state.initialObjState = state.initialMultiStates[0].snapshot;
+      }
     } else {
-      selectObject(null);
-      state.dragMode = null;
+      if (!e.shiftKey) selectObject(null);
+      state.dragMode = 'marquee';
+      state.marqueeRect = { x: pos.x, y: pos.y, w: 0, h: 0 };
     }
     renderAll();
     return;
@@ -166,24 +180,40 @@ overlayCanvas.addEventListener('mousemove', (e) => {
   }
 
   if (tool === 'select' && state.dragMode === 'move') {
-    const selObj = getSelectedObject();
-    if (!selObj || !state.initialObjState) return;
+    const multi = state.initialMultiStates;
+    if (!multi || multi.length === 0) return;
 
     const dx = pos.x - state.dragStart.x;
     const dy = pos.y - state.dragStart.y;
 
-    if (selObj.type === 'line') {
-      selObj.x1 = Math.max(0, Math.min(SCREEN_WIDTH - 1, state.initialObjState.x1 + dx));
-      selObj.y1 = Math.max(0, Math.min(SCREEN_HEIGHT - 1, state.initialObjState.y1 + dy));
-      selObj.x2 = Math.max(0, Math.min(SCREEN_WIDTH - 1, state.initialObjState.x2 + dx));
-      selObj.y2 = Math.max(0, Math.min(SCREEN_HEIGHT - 1, state.initialObjState.y2 + dy));
-    } else {
-      selObj.x = Math.max(0, Math.min(SCREEN_WIDTH - 1, state.initialObjState.x + dx));
-      selObj.y = Math.max(0, Math.min(SCREEN_HEIGHT - 1, state.initialObjState.y + dy));
+    for (const entry of multi) {
+      const obj = state.objects.find(o => o.id === entry.id);
+      if (!obj) continue;
+      const init = entry.snapshot;
+      if (obj.type === 'line') {
+        obj.x1 = Math.max(0, Math.min(SCREEN_WIDTH - 1, init.x1 + dx));
+        obj.y1 = Math.max(0, Math.min(SCREEN_HEIGHT - 1, init.y1 + dy));
+        obj.x2 = Math.max(0, Math.min(SCREEN_WIDTH - 1, init.x2 + dx));
+        obj.y2 = Math.max(0, Math.min(SCREEN_HEIGHT - 1, init.y2 + dy));
+      } else {
+        obj.x = Math.max(0, Math.min(SCREEN_WIDTH - 1, init.x + dx));
+        obj.y = Math.max(0, Math.min(SCREEN_HEIGHT - 1, init.y + dy));
+      }
     }
 
-    updatePropertiesFormValues(selObj);
+    const selObj = getSelectedObject();
+    if (selObj && multi.length === 1) updatePropertiesFormValues(selObj);
     renderAll();
+    return;
+  }
+
+  if (tool === 'select' && state.dragMode === 'marquee') {
+    const x0 = Math.min(state.dragStart.x, pos.x);
+    const y0 = Math.min(state.dragStart.y, pos.y);
+    const w = Math.abs(pos.x - state.dragStart.x);
+    const h = Math.abs(pos.y - state.dragStart.y);
+    state.marqueeRect = { x: x0, y: y0, w, h };
+    renderOverlay();
     return;
   }
 
@@ -309,8 +339,30 @@ window.addEventListener('mouseup', () => {
     updateArduinoCode();
   }
 
+  if (state.dragMode === 'marquee' && state.marqueeRect) {
+    const m = state.marqueeRect;
+    if (m.w >= 2 || m.h >= 2) {
+      const hitIds = state.objects
+        .filter(obj => {
+          if (obj.visible === false) return false;
+          const b = getObjectBounds(obj);
+          return !(b.x + b.w < m.x || b.x > m.x + m.w || b.y + b.h < m.y || b.y > m.y + m.h);
+        })
+        .map(o => o.id);
+      if (hitIds.length > 0) {
+        state.selectedIds = Array.from(new Set([...state.selectedIds, ...hitIds]));
+        state.selectedId = state.selectedIds[state.selectedIds.length - 1];
+        updatePropertiesPanel();
+        renderLayersList();
+      }
+    }
+    state.marqueeRect = null;
+    renderOverlay();
+  }
+
   state.dragMode = null;
   state.initialObjState = null;
+  state.initialMultiStates = null;
   state.creationPreview = null;
   updateArduinoCode();
 });
@@ -465,14 +517,14 @@ if (screenTypeSelect) {
   });
 }
 
-btnClearAll.addEventListener('click', () => {
+btnClearAll.addEventListener('click', async () => {
   if (state.objects.length === 0 && state.pixels.every(p => p === 0) && state.erasedPixels.every(p => p === 0)) return;
   const currentScreen = getActiveScreen() || state.screens[0];
   const screenTitle = currentScreen ? currentScreen.name : 'bu ekranı';
   const confirmMsg = typeof t === 'function'
     ? t('confirm_clear_all', { name: screenTitle })
     : `"${screenTitle}" ekranındaki tüm çizimleri ve nesneleri temizlemek istediğinize emin misiniz?`;
-  if (confirm(confirmMsg)) {
+  if (await showConfirm(confirmMsg)) {
     pushHistory();
     state.pixels.fill(0);
     state.erasedPixels.fill(0);
@@ -532,8 +584,8 @@ function updatePropertiesPanel() {
   if (brushPropertiesForm) brushPropertiesForm.style.display = 'none';
   if (propertiesPanelHeading) propertiesPanelHeading.textContent = typeof t === 'function' ? t('heading_properties') : 'ÖZELLİKLER';
 
-  const selObj = getSelectedObject();
-  if (!selObj) {
+  const selObjs = getSelectedObjects();
+  if (selObjs.length === 0) {
     if (noSelectionMsg) noSelectionMsg.style.display = 'flex';
     if (propertiesForm) propertiesForm.style.display = 'none';
     if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
@@ -545,7 +597,22 @@ function updatePropertiesPanel() {
   if (noSelectionMsg) noSelectionMsg.style.display = 'none';
   if (propertiesForm) propertiesForm.style.display = 'flex';
   if (btnDeleteSelected) btnDeleteSelected.disabled = false;
-  selectionStatus.textContent = typeof t === 'function' 
+
+  if (selObjs.length > 1) {
+    if (dimensionProps) dimensionProps.style.display = 'none';
+    if (textSpecificProps) textSpecificProps.style.display = 'none';
+    if (shapeSpecificProps) shapeSpecificProps.style.display = 'none';
+    if (bitmapSpecificProps) bitmapSpecificProps.style.display = 'none';
+    if (propX && propX.closest('.form-row-2col')) propX.closest('.form-row-2col').style.display = 'none';
+    selectionStatus.textContent = typeof t === 'function'
+      ? t('multi_selected_status', { count: selObjs.length })
+      : `${selObjs.length} nesne seçildi`;
+    return;
+  }
+
+  if (propX && propX.closest('.form-row-2col')) propX.closest('.form-row-2col').style.display = 'grid';
+  const selObj = selObjs[0];
+  selectionStatus.textContent = typeof t === 'function'
     ? t('status_selected', { name: selObj.name, type: getReadableObjectName(selObj.type, selObj) })
     : `Seçili: ${selObj.name} (${getReadableObjectName(selObj.type, selObj)})`;
 
@@ -858,91 +925,53 @@ if (propBitmapInvert) {
 btnDeleteSelected.addEventListener('click', deleteSelectedObject);
 
 function deleteSelectedObject() {
-  const selObj = getSelectedObject();
-  if (!selObj) return;
+  const selObjs = getSelectedObjects();
+  if (selObjs.length === 0) return;
+  const ids = new Set(selObjs.map(o => o.id));
   pushHistory();
-  state.objects = state.objects.filter(o => o.id !== selObj.id);
+  state.objects = state.objects.filter(o => !ids.has(o.id));
   selectObject(null);
   renderAll();
   updateArduinoCode();
 }
 
-document.getElementById('btnAlignLeft').addEventListener('click', () => {
-  const sel = getSelectedObject();
-  if (!sel) return;
+function alignSelectedObjects(mode) {
+  const selObjs = getSelectedObjects();
+  if (selObjs.length === 0) return;
   pushHistory();
-  if (sel.type === 'line') {
-    const min = Math.min(sel.x1, sel.x2);
-    sel.x1 -= min;
-    sel.x2 -= min;
-  } else if (sel.type === 'circle' || sel.type === 'filled_circle') {
-    sel.x = sel.r;
-  } else {
-    sel.x = 0;
+
+  for (const sel of selObjs) {
+    const b = getObjectBounds(sel);
+    let dx = 0;
+    let dy = 0;
+
+    if (mode === 'left') dx = -b.x;
+    else if (mode === 'centerH') dx = Math.round((SCREEN_WIDTH - b.w) / 2) - b.x;
+    else if (mode === 'right') dx = (SCREEN_WIDTH - b.w) - b.x;
+    else if (mode === 'top') dy = -b.y;
+    else if (mode === 'centerV') dy = Math.round((SCREEN_HEIGHT - b.h) / 2) - b.y;
+    else if (mode === 'bottom') dy = (SCREEN_HEIGHT - b.h) - b.y;
+
+    if (sel.type === 'line') {
+      sel.x1 += dx; sel.x2 += dx;
+      sel.y1 += dy; sel.y2 += dy;
+    } else {
+      sel.x += dx;
+      sel.y += dy;
+    }
   }
-  updatePropertiesFormValues(sel);
+
+  if (selObjs.length === 1) updatePropertiesFormValues(selObjs[0]);
   renderAll();
-});
+  updateArduinoCode();
+}
 
-document.getElementById('btnAlignCenterH').addEventListener('click', () => {
-  const sel = getSelectedObject();
-  if (!sel) return;
-  pushHistory();
-  const b = getObjectBounds(sel);
-  const targetX = Math.round((SCREEN_WIDTH - b.w) / 2);
-  const dx = targetX - b.x;
-
-  if (sel.type === 'line') {
-    sel.x1 += dx;
-    sel.x2 += dx;
-  } else if (sel.type === 'circle' || sel.type === 'filled_circle') {
-    sel.x = Math.round(SCREEN_WIDTH / 2);
-  } else {
-    sel.x += dx;
-  }
-  updatePropertiesFormValues(sel);
-  renderAll();
-});
-
-document.getElementById('btnAlignRight').addEventListener('click', () => {
-  const sel = getSelectedObject();
-  if (!sel) return;
-  pushHistory();
-  const b = getObjectBounds(sel);
-  const targetX = SCREEN_WIDTH - b.w;
-  const dx = targetX - b.x;
-
-  if (sel.type === 'line') {
-    sel.x1 += dx;
-    sel.x2 += dx;
-  } else if (sel.type === 'circle' || sel.type === 'filled_circle') {
-    sel.x = SCREEN_WIDTH - sel.r;
-  } else {
-    sel.x += dx;
-  }
-  updatePropertiesFormValues(sel);
-  renderAll();
-});
-
-document.getElementById('btnAlignCenterV').addEventListener('click', () => {
-  const sel = getSelectedObject();
-  if (!sel) return;
-  pushHistory();
-  const b = getObjectBounds(sel);
-  const targetY = Math.round((SCREEN_HEIGHT - b.h) / 2);
-  const dy = targetY - b.y;
-
-  if (sel.type === 'line') {
-    sel.y1 += dy;
-    sel.y2 += dy;
-  } else if (sel.type === 'circle' || sel.type === 'filled_circle') {
-    sel.y = Math.round(SCREEN_HEIGHT / 2);
-  } else {
-    sel.y += dy;
-  }
-  updatePropertiesFormValues(sel);
-  renderAll();
-});
+document.getElementById('btnAlignLeft').addEventListener('click', () => alignSelectedObjects('left'));
+document.getElementById('btnAlignCenterH').addEventListener('click', () => alignSelectedObjects('centerH'));
+document.getElementById('btnAlignRight').addEventListener('click', () => alignSelectedObjects('right'));
+document.getElementById('btnAlignTop').addEventListener('click', () => alignSelectedObjects('top'));
+document.getElementById('btnAlignCenterV').addEventListener('click', () => alignSelectedObjects('centerV'));
+document.getElementById('btnAlignBottom').addEventListener('click', () => alignSelectedObjects('bottom'));
 
 function renderLayersList() {
   layersList.innerHTML = '';
@@ -962,7 +991,7 @@ function renderLayersList() {
 
   for (let i = state.objects.length - 1; i >= 0; i--) {
     const obj = state.objects[i];
-    const isSelected = (obj.id === state.selectedId);
+    const isSelected = state.selectedIds.includes(obj.id) || (obj.id === state.selectedId);
 
     const item = document.createElement('div');
     item.className = `layer-item ${isSelected ? 'active' : ''}`;
@@ -991,7 +1020,7 @@ function renderLayersList() {
 
     item.addEventListener('click', (e) => {
       if (e.target.closest('.layer-actions')) return;
-      selectObject(obj.id);
+      selectObject(obj.id, e.shiftKey);
       setActiveTool('select');
       renderAll();
     });

@@ -486,9 +486,10 @@ ${invertCode}  drawScreen1();
   display.display();
 }`;
 
+  const i2cAddr = state.i2cAddress || '0x3C';
   return `/*
  * ${profile.name} (${profile.driver}) Modular Arduino Sketch
- * Resolution: ${SCREEN_WIDTH}x${SCREEN_HEIGHT} Pixels, I2C Address: 0x3C
+ * Resolution: ${SCREEN_WIDTH}x${SCREEN_HEIGHT} Pixels, I2C Address: ${i2cAddr}
  * Total Screens: ${state.screens.length}
  */
 
@@ -499,7 +500,7 @@ ${fontInclude}
 #define SCREEN_WIDTH ${SCREEN_WIDTH}
 #define SCREEN_HEIGHT ${SCREEN_HEIGHT}
 #define OLED_RESET    -1
-#define SCREEN_ADDRESS 0x3C
+#define SCREEN_ADDRESS ${i2cAddr}
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);${fontInstance}
 ${progmemBlock}// ==========================================================================
@@ -630,7 +631,7 @@ void loop() {
 #define SCREEN_WIDTH ${SCREEN_WIDTH}
 #define SCREEN_HEIGHT ${SCREEN_HEIGHT}
 #define OLED_RESET -1
-#define SCREEN_ADDRESS 0x3C
+#define SCREEN_ADDRESS ${state.i2cAddress || '0x3C'}
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
@@ -696,7 +697,7 @@ ${switchCases.join('\n')}
 // ==========================================================================
 void setup() {
   Serial.begin(115200);
-  u8g2.begin();
+${(state.i2cAddress && state.i2cAddress !== '0x3C') ? `  u8g2.setI2CAddress(${state.i2cAddress} * 2);\n` : ''}  u8g2.begin();
   // Display initial screen (0 = Screen 1)
   showScreen(0);
 }
@@ -708,7 +709,7 @@ ${loopCode}`;
 // ==========================================================================
 void setup() {
   Serial.begin(115200);
-  u8g2.begin();
+${(state.i2cAddress && state.i2cAddress !== '0x3C') ? `  u8g2.setI2CAddress(${state.i2cAddress} * 2);\n` : ''}  u8g2.begin();
 }
 
 void loop() {
@@ -811,6 +812,33 @@ function calculateMemoryStats() {
   };
 }
 
+function highlightCppCode(code) {
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const tokenRegex = /(\/\*[\s\S]*?\*\/|\/\/.*$)|(^#[a-zA-Z_]+.*$)|("(?:\\.|[^"\\])*")|(\b(?:void|int|const|static|unsigned|char|bool|float|double|long|short|if|else|for|while|do|switch|case|default|break|return|inline|extern|sizeof|true|false|PROGMEM)\b)|(\b(?:uint8_t|uint16_t|uint32_t|int16_t|String|Adafruit_SSD1306|U8G2_SSD1306_128X64_NONAME_F_HW_I2C|U8g2_for_Adafruit_GFX)\b)|(\b0x[0-9a-fA-F]+\b|\b\d+\b)|(\b[a-zA-Z_][a-zA-Z0-9_]*(?=\s*\())/gm;
+
+  let out = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = tokenRegex.exec(code)) !== null) {
+    if (match.index > lastIndex) {
+      out += esc(code.slice(lastIndex, match.index));
+    }
+    const text = esc(match[0]);
+    if (match[1]) out += `<span class="cpp-cmt">${text}</span>`;
+    else if (match[2]) out += `<span class="cpp-prep">${text}</span>`;
+    else if (match[3]) out += `<span class="cpp-str">${text}</span>`;
+    else if (match[4]) out += `<span class="cpp-kw">${text}</span>`;
+    else if (match[5]) out += `<span class="cpp-type">${text}</span>`;
+    else if (match[6]) out += `<span class="cpp-num">${text}</span>`;
+    else if (match[7]) out += `<span class="cpp-fn">${text}</span>`;
+    lastIndex = tokenRegex.lastIndex;
+  }
+  if (lastIndex < code.length) {
+    out += esc(code.slice(lastIndex));
+  }
+  return out;
+}
+
 function updateArduinoCode() {
   const code = generateArduinoCode();
   arduinoCodeSnippet.textContent = code;
@@ -819,7 +847,7 @@ function updateArduinoCode() {
 
   const modalCode = document.getElementById('modalArduinoCodeSnippet');
   if (modalCode) {
-    modalCode.textContent = code;
+    modalCode.innerHTML = highlightCppCode(code);
   }
   const statFlash = document.getElementById('statFlash');
   const statObjects = document.getElementById('statObjects');
@@ -879,6 +907,15 @@ codeModalOverlay.addEventListener('click', (e) => {
     closeCodeModal();
   }
 });
+
+const modalI2cSelect = document.getElementById('modalI2cSelect');
+if (modalI2cSelect) {
+  modalI2cSelect.value = state.i2cAddress || '0x3C';
+  modalI2cSelect.addEventListener('change', () => {
+    state.i2cAddress = modalI2cSelect.value;
+    updateArduinoCode();
+  });
+}
 
 if (modalCodeFormatSelect) {
   modalCodeFormatSelect.addEventListener('change', () => {

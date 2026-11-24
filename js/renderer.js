@@ -65,8 +65,30 @@ function getSelectedObject() {
   return state.objects.find(o => o.id === state.selectedId) || null;
 }
 
-function selectObject(id) {
-  state.selectedId = id;
+function getSelectedObjects() {
+  if (!state.selectedIds || state.selectedIds.length === 0) {
+    const single = getSelectedObject();
+    return single ? [single] : [];
+  }
+  return state.objects.filter(o => state.selectedIds.includes(o.id));
+}
+
+function selectObject(id, additive = false) {
+  if (!id) {
+    state.selectedIds = [];
+    state.selectedId = null;
+  } else if (additive) {
+    const idx = state.selectedIds.indexOf(id);
+    if (idx >= 0) {
+      state.selectedIds.splice(idx, 1);
+    } else {
+      state.selectedIds.push(id);
+    }
+    state.selectedId = state.selectedIds[state.selectedIds.length - 1] || null;
+  } else {
+    state.selectedIds = [id];
+    state.selectedId = id;
+  }
   updatePropertiesPanel();
   renderOverlay();
   renderLayersList();
@@ -379,36 +401,50 @@ function renderOverlay() {
     }
   }
 
-  const selObj = getSelectedObject();
-  if (selObj && state.activeTool === 'select') {
-    const bounds = getObjectBounds(selObj);
-    if (!bounds) return;
-
+  const selObjs = getSelectedObjects();
+  if (selObjs.length > 0 && state.activeTool === 'select') {
     overlayCtx.save();
+    for (const selObj of selObjs) {
+      const bounds = getObjectBounds(selObj);
+      if (!bounds) continue;
 
+      overlayCtx.strokeStyle = '#3b82f6';
+      overlayCtx.lineWidth = 1;
+      overlayCtx.setLineDash([2, 2]);
+      overlayCtx.strokeRect(bounds.x - 0.5, bounds.y - 0.5, bounds.w + 1, bounds.h + 1);
+
+      if (selObjs.length === 1) {
+        overlayCtx.setLineDash([]);
+        overlayCtx.fillStyle = '#ffffff';
+        overlayCtx.strokeStyle = '#2563eb';
+        overlayCtx.lineWidth = 1;
+
+        const handleSize = 3;
+        const handles = [
+          { x: bounds.x, y: bounds.y },
+          { x: bounds.x + bounds.w, y: bounds.y },
+          { x: bounds.x + bounds.w, y: bounds.y + bounds.h },
+          { x: bounds.x, y: bounds.y + bounds.h }
+        ];
+
+        for (const h of handles) {
+          overlayCtx.fillRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
+          overlayCtx.strokeRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
+        }
+      }
+    }
+    overlayCtx.restore();
+  }
+
+  if (state.marqueeRect) {
+    const m = state.marqueeRect;
+    overlayCtx.save();
+    overlayCtx.fillStyle = 'rgba(59, 130, 246, 0.16)';
     overlayCtx.strokeStyle = '#3b82f6';
     overlayCtx.lineWidth = 1;
     overlayCtx.setLineDash([2, 2]);
-    overlayCtx.strokeRect(bounds.x - 0.5, bounds.y - 0.5, bounds.w + 1, bounds.h + 1);
-
-    overlayCtx.setLineDash([]);
-    overlayCtx.fillStyle = '#ffffff';
-    overlayCtx.strokeStyle = '#2563eb';
-    overlayCtx.lineWidth = 1;
-
-    const handleSize = 3;
-    const handles = [
-      { x: bounds.x, y: bounds.y }, 
-      { x: bounds.x + bounds.w, y: bounds.y }, 
-      { x: bounds.x + bounds.w, y: bounds.y + bounds.h }, 
-      { x: bounds.x, y: bounds.y + bounds.h } 
-    ];
-
-    for (const h of handles) {
-      overlayCtx.fillRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
-      overlayCtx.strokeRect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
-    }
-
+    overlayCtx.fillRect(m.x, m.y, m.w, m.h);
+    overlayCtx.strokeRect(m.x + 0.5, m.y + 0.5, m.w, m.h);
     overlayCtx.restore();
   }
 
